@@ -68,7 +68,6 @@ public class AuthController extends BaseController implements AuthControllerInte
             **Features:**
             - Unique username and email validation
             - Strong password requirements
-            - Automatic user status initialization
             - Immediate response with user data (excluding sensitive info)
             
             **Validation Rules:**
@@ -96,7 +95,6 @@ public class AuthController extends BaseController implements AuthControllerInte
                                 "id": 1,
                                 "username": "john_doe",
                                 "email": "john@example.com",
-                                "status": "OFFLINE",
                                 "createdAt": "2025-01-25T10:30:00Z",
                                 "avatarUrl": null
                             }
@@ -187,7 +185,6 @@ public class AuthController extends BaseController implements AuthControllerInte
             - Username-based login (modern security practice)
             - JWT token generation (access + refresh)
             - Secure password validation with BCrypt
-            - User status update to ONLINE
             - Comprehensive token information in response
             
             **Security:**
@@ -220,7 +217,6 @@ public class AuthController extends BaseController implements AuthControllerInte
                                     "id": 1,
                                     "username": "john_doe",
                                     "email": "john@example.com",
-                                    "status": "ONLINE",
                                     "createdAt": "2025-01-25T10:30:00Z"
                                 }
                             }

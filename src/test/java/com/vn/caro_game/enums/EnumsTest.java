@@ -9,17 +9,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EnumsTest {
 
     @Test
-    @DisplayName("Should have correct UserStatus values")
-    void shouldHaveCorrectUserStatusValues() {
-        assertThat(UserStatus.values()).hasSize(2);
-        assertThat(UserStatus.ONLINE).isNotNull();
-        assertThat(UserStatus.OFFLINE).isNotNull();
-        
-        assertThat(UserStatus.ONLINE.name()).isEqualTo("ONLINE");
-        assertThat(UserStatus.OFFLINE.name()).isEqualTo("OFFLINE");
-    }
-
-    @Test
     @DisplayName("Should have correct StatusCode values")
     void shouldHaveCorrectStatusCodeValues() {
         // Test some key status codes
@@ -38,13 +27,11 @@ class EnumsTest {
         assertThat(StatusCode.NOT_FOUND).isNotNull();
         assertThat(StatusCode.TOO_MANY_REQUESTS).isNotNull();
         assertThat(StatusCode.ACCOUNT_LOCKED).isNotNull();
-    }
 
-    @Test
-    @DisplayName("Should have UserStatus enum with correct string representation")
-    void shouldHaveUserStatusEnumWithCorrectStringRepresentation() {
-        assertThat(UserStatus.ONLINE.toString()).isEqualTo("ONLINE");
-        assertThat(UserStatus.OFFLINE.toString()).isEqualTo("OFFLINE");
+        // Verify status codes have proper values
+        assertThat(StatusCode.EMAIL_ALREADY_EXISTS.getCode()).isEqualTo(4001);
+        assertThat(StatusCode.USERNAME_ALREADY_EXISTS.getCode()).isEqualTo(4002);
+        assertThat(StatusCode.INVALID_CREDENTIALS.getCode()).isEqualTo(4003);
     }
 
     @Test
@@ -53,13 +40,6 @@ class EnumsTest {
         assertThat(StatusCode.valueOf("EMAIL_ALREADY_EXISTS")).isEqualTo(StatusCode.EMAIL_ALREADY_EXISTS);
         assertThat(StatusCode.valueOf("INVALID_CREDENTIALS")).isEqualTo(StatusCode.INVALID_CREDENTIALS);
         assertThat(StatusCode.valueOf("USER_NOT_FOUND")).isEqualTo(StatusCode.USER_NOT_FOUND);
-    }
-
-    @Test
-    @DisplayName("Should be able to get UserStatus values by name")
-    void shouldBeAbleToGetUserStatusValuesByName() {
-        assertThat(UserStatus.valueOf("ONLINE")).isEqualTo(UserStatus.ONLINE);
-        assertThat(UserStatus.valueOf("OFFLINE")).isEqualTo(UserStatus.OFFLINE);
     }
 
     @Test
@@ -77,9 +57,42 @@ class EnumsTest {
     }
 
     @Test
-    @DisplayName("Should have distinct UserStatus values")
-    void shouldHaveDistinctUserStatusValues() {
-        UserStatus[] values = UserStatus.values();
-        assertThat(values).doesNotHaveDuplicates();
+    @DisplayName("RoomStatus enum should have correct values")
+    void testRoomStatusEnum() {
+        RoomStatus[] values = RoomStatus.values();
+        
+        assertThat(values).hasSize(3);
+        assertThat(values).containsExactly(
+            RoomStatus.WAITING,
+            RoomStatus.PLAYING,
+            RoomStatus.FINISHED
+        );
+    }
+
+    @Test
+    @DisplayName("FriendStatus enum should have correct values")
+    void testFriendStatusEnum() {
+        FriendStatus[] values = FriendStatus.values();
+        
+        assertThat(values).hasSize(3);
+        assertThat(values).containsExactly(
+            FriendStatus.PENDING,
+            FriendStatus.ACCEPTED,
+            FriendStatus.BLOCKED
+        );
+    }
+
+    @Test
+    @DisplayName("GameResult enum should have correct values")
+    void testGameResultEnum() {
+        GameResult[] values = GameResult.values();
+        
+        assertThat(values).hasSize(4);
+        assertThat(values).containsExactly(
+            GameResult.X_WIN,
+            GameResult.O_WIN,
+            GameResult.DRAW,
+            GameResult.ONGOING
+        );
     }
 }

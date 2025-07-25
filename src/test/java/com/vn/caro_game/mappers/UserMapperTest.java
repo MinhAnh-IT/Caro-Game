@@ -3,7 +3,6 @@ package com.vn.caro_game.mappers;
 import com.vn.caro_game.dtos.request.UserCreation;
 import com.vn.caro_game.dtos.response.UserResponse;
 import com.vn.caro_game.entities.User;
-import com.vn.caro_game.enums.UserStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +42,6 @@ class UserMapperTest {
         // These should be ignored and null/default
         assertThat(user.getId()).isNull();
         assertThat(user.getAvatarUrl()).isNull();
-        assertThat(user.getStatus()).isEqualTo(UserStatus.OFFLINE); // Default status
         assertThat(user.getCreatedAt()).isNull();
     }
 
@@ -58,7 +56,6 @@ class UserMapperTest {
         user.setEmail("test@example.com");
         user.setPassword("password123"); // This should not be included in response
         user.setAvatarUrl("http://example.com/avatar.jpg");
-        user.setStatus(UserStatus.ONLINE);
         user.setCreatedAt(now);
 
         // When
@@ -70,7 +67,6 @@ class UserMapperTest {
         assertThat(userResponse.getUsername()).isEqualTo("testuser");
         assertThat(userResponse.getEmail()).isEqualTo("test@example.com");
         assertThat(userResponse.getAvatarUrl()).isEqualTo("http://example.com/avatar.jpg");
-        assertThat(userResponse.getStatus()).isEqualTo(UserStatus.ONLINE);
         assertThat(userResponse.getCreatedAt()).isEqualTo(now);
         
         // Password should not be included in response (UserResponse doesn't have password field)
@@ -115,7 +111,6 @@ class UserMapperTest {
         assertThat(userResponse.getUsername()).isEqualTo("testuser");
         assertThat(userResponse.getEmail()).isEqualTo("test@example.com");
         assertThat(userResponse.getAvatarUrl()).isNull();
-        assertThat(userResponse.getStatus()).isEqualTo(UserStatus.OFFLINE); // Default status
         assertThat(userResponse.getCreatedAt()).isNull();
     }
 }

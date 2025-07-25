@@ -1,6 +1,5 @@
 package com.vn.caro_game.dtos.response;
 
-import com.vn.caro_game.enums.UserStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -17,6 +16,5 @@ public class UserResponse {
     String username;
     String email;
     String avatarUrl;
-    UserStatus status;
     LocalDateTime createdAt;
 }

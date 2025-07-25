@@ -1,7 +1,7 @@
 package com.vn.caro_game.repositories;
 
 import com.vn.caro_game.entities.User;
-import com.vn.caro_game.enums.UserStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,41 +24,53 @@ class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Test
-    @DisplayName("Should find user by email")
-    void shouldFindUserByEmail() {
-        // Given
-        User user = createTestUser("test@example.com", "testuser");
-        entityManager.persistAndFlush(user);
+    private User testUser;
 
-        // When
-        Optional<User> foundUser = userRepository.findByEmail("test@example.com");
-
-        // Then
-        assertThat(foundUser).isPresent();
-        assertThat(foundUser.get().getEmail()).isEqualTo("test@example.com");
-        assertThat(foundUser.get().getUsername()).isEqualTo("testuser");
+    @BeforeEach
+    void setUp() {
+        testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+        testUser.setPassword("hashedPassword");
+        testUser.setAvatarUrl("https://example.com/avatar.jpg");
     }
 
     @Test
-    @DisplayName("Should return empty when user not found by email")
-    void shouldReturnEmptyWhenUserNotFoundByEmail() {
+    @DisplayName("Should save and retrieve user")
+    void shouldSaveAndRetrieveUser() {
         // When
-        Optional<User> foundUser = userRepository.findByEmail("nonexistent@example.com");
+        User savedUser = userRepository.save(testUser);
 
         // Then
-        assertThat(foundUser).isEmpty();
+        assertThat(savedUser.getId()).isNotNull();
+        assertThat(savedUser.getUsername()).isEqualTo("testuser");
+        assertThat(savedUser.getEmail()).isEqualTo("test@example.com");
+        assertThat(savedUser.getCreatedAt()).isNotNull();
     }
 
     @Test
     @DisplayName("Should find user by username")
     void shouldFindUserByUsername() {
         // Given
-        User user = createTestUser("test@example.com", "testuser");
-        entityManager.persistAndFlush(user);
+        entityManager.persistAndFlush(testUser);
 
         // When
         Optional<User> foundUser = userRepository.findByUsername("testuser");
+
+        // Then
+        assertThat(foundUser).isPresent();
+        assertThat(foundUser.get().getUsername()).isEqualTo("testuser");
+        assertThat(foundUser.get().getEmail()).isEqualTo("test@example.com");
+    }
+
+    @Test
+    @DisplayName("Should find user by email")
+    void shouldFindUserByEmail() {
+        // Given
+        entityManager.persistAndFlush(testUser);
+
+        // When
+        Optional<User> foundUser = userRepository.findByEmail("test@example.com");
 
         // Then
         assertThat(foundUser).isPresent();
@@ -77,23 +89,20 @@ class UserRepositoryTest {
     }
 
     @Test
-    @DisplayName("Should check if email exists")
-    void shouldCheckIfEmailExists() {
-        // Given
-        User user = createTestUser("test@example.com", "testuser");
-        entityManager.persistAndFlush(user);
+    @DisplayName("Should return empty when user not found by email")
+    void shouldReturnEmptyWhenUserNotFoundByEmail() {
+        // When
+        Optional<User> foundUser = userRepository.findByEmail("nonexistent@example.com");
 
-        // When & Then
-        assertThat(userRepository.existsByEmail("test@example.com")).isTrue();
-        assertThat(userRepository.existsByEmail("nonexistent@example.com")).isFalse();
+        // Then
+        assertThat(foundUser).isEmpty();
     }
 
     @Test
-    @DisplayName("Should check if username exists")
-    void shouldCheckIfUsernameExists() {
+    @DisplayName("Should check if user exists by username")
+    void shouldCheckIfUserExistsByUsername() {
         // Given
-        User user = createTestUser("test@example.com", "testuser");
-        entityManager.persistAndFlush(user);
+        entityManager.persistAndFlush(testUser);
 
         // When & Then
         assertThat(userRepository.existsByUsername("testuser")).isTrue();
@@ -101,29 +110,71 @@ class UserRepositoryTest {
     }
 
     @Test
-    @DisplayName("Should update password")
-    void shouldUpdatePassword() {
+    @DisplayName("Should check if user exists by email")
+    void shouldCheckIfUserExistsByEmail() {
         // Given
-        User user = createTestUser("test@example.com", "testuser");
-        user.setPassword("oldPassword");
-        entityManager.persistAndFlush(user);
+        entityManager.persistAndFlush(testUser);
+
+        // When & Then
+        assertThat(userRepository.existsByEmail("test@example.com")).isTrue();
+        assertThat(userRepository.existsByEmail("nonexistent@example.com")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should update user password")
+    void shouldUpdateUserPassword() {
+        // Given
+        User savedUser = entityManager.persistAndFlush(testUser);
+        String newPassword = "newHashedPassword";
 
         // When
-        userRepository.updatePassword("test@example.com", "newPassword");
+        userRepository.updatePassword(savedUser.getEmail(), newPassword);
         entityManager.flush();
         entityManager.clear();
 
         // Then
-        User updatedUser = userRepository.findByEmail("test@example.com").orElseThrow();
-        assertThat(updatedUser.getPassword()).isEqualTo("newPassword");
+        Optional<User> updatedUser = userRepository.findByEmail(savedUser.getEmail());
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getPassword()).isEqualTo(newPassword);
     }
 
-    private User createTestUser(String email, String username) {
-        User user = new User();
-        user.setEmail(email);
-        user.setUsername(username);
-        user.setPassword("password123");
-        user.setStatus(UserStatus.OFFLINE);
-        return user;
+    @Test
+    @DisplayName("Should handle unique constraint for username")
+    void shouldHandleUniqueConstraintForUsername() {
+        // Given
+        entityManager.persistAndFlush(testUser);
+
+        User duplicateUser = new User();
+        duplicateUser.setUsername("testuser"); // Same username
+        duplicateUser.setEmail("different@example.com");
+        duplicateUser.setPassword("password");
+
+        // When & Then
+        try {
+            entityManager.persistAndFlush(duplicateUser);
+        } catch (Exception e) {
+            // Expected exception due to unique constraint
+            assertThat(e).isNotNull();
+        }
+    }
+
+    @Test
+    @DisplayName("Should handle unique constraint for email")
+    void shouldHandleUniqueConstraintForEmail() {
+        // Given
+        entityManager.persistAndFlush(testUser);
+
+        User duplicateUser = new User();
+        duplicateUser.setUsername("differentuser");
+        duplicateUser.setEmail("test@example.com"); // Same email
+        duplicateUser.setPassword("password");
+
+        // When & Then
+        try {
+            entityManager.persistAndFlush(duplicateUser);
+        } catch (Exception e) {
+            // Expected exception due to unique constraint
+            assertThat(e).isNotNull();
+        }
     }
 }

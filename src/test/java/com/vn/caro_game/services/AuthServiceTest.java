@@ -8,7 +8,6 @@ import com.vn.caro_game.dtos.response.AuthResponse;
 import com.vn.caro_game.dtos.response.UserResponse;
 import com.vn.caro_game.entities.User;
 import com.vn.caro_game.enums.StatusCode;
-import com.vn.caro_game.enums.UserStatus;
 import com.vn.caro_game.exceptions.CustomException;
 import com.vn.caro_game.integrations.email.EmailService;
 import com.vn.caro_game.integrations.jwt.JwtService;
@@ -73,7 +72,6 @@ class AuthServiceTest {
         testUser.setEmail("test@example.com");
         testUser.setUsername("testuser");
         testUser.setPassword("encodedPassword");
-        testUser.setStatus(UserStatus.OFFLINE);
 
         userCreation = new UserCreation();
         userCreation.setEmail("test@example.com");
@@ -84,7 +82,6 @@ class AuthServiceTest {
                 .id(1L)
                 .email("test@example.com")
                 .username("testuser")
-                .status(UserStatus.OFFLINE)
                 .build();
 
         loginRequest = new LoginRequest();
