@@ -31,3 +31,29 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### MacOS ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Backup files ###
+*.backup
+*_OLD.*
+*_BACKUP.*
+
+### Log files ###
+*.log
+logs/
+
+### Environment files ###
+.env
+.env.local
+.env.production
+
+### Application specific ###
+application-local.properties
+application-dev.properties
