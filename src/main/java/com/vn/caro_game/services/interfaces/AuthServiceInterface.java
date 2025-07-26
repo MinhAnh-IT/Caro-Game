@@ -5,23 +5,56 @@ import com.vn.caro_game.dtos.response.AuthResponse;
 import com.vn.caro_game.dtos.response.UserResponse;
 
 /**
- * Authentication Service Interface
- * Defines contract for authentication business logic
- * Follows clean architecture principles with clear separation of concerns
+ * Authentication Service Interface for user authentication and authorization operations.
+ * 
+ * <p>This interface defines the contract for authentication business logic following
+ * clean architecture principles with clear separation of concerns.</p>
+ * 
+ * <h3>Core Operations:</h3>
+ * <ul>
+ *   <li><strong>Registration:</strong> New user account creation with validation</li>
+ *   <li><strong>Authentication:</strong> Login with JWT token generation</li>
+ *   <li><strong>OTP Management:</strong> Email verification and password reset</li>
+ *   <li><strong>Token Management:</strong> JWT refresh and logout operations</li>
+ * </ul>
+ * 
+ * <h3>Security Features:</h3>
+ * <ul>
+ *   <li>Email verification with OTP</li>
+ *   <li>Password complexity validation</li>
+ *   <li>JWT token blacklisting</li>
+ *   <li>Rate limiting and security checks</li>
+ * </ul>
+ * 
+ * @author Caro Game Team
+ * @since 1.0.0
+ * @see AuthService
+ * @see UserResponse
+ * @see AuthResponse
  */
 public interface AuthServiceInterface {
     
     /**
-     * Register a new user
-     * @param userCreation User registration data
-     * @return UserResponse with user details
+     * Registers a new user account with email verification.
+     * 
+     * <p>Creates a new user account with the provided registration data.
+     * Sends an OTP email for account verification.</p>
+     * 
+     * @param userCreation user registration data including username, email, and password
+     * @return UserResponse containing the created user details
+     * @throws RuntimeException if username/email already exists or validation fails
      */
     UserResponse register(UserCreation userCreation);
     
     /**
-     * Authenticate user with username/password
-     * @param loginRequest Login credentials
-     * @return AuthResponse with tokens and user info
+     * Authenticates user with username/email and password.
+     * 
+     * <p>Validates user credentials and generates JWT access/refresh tokens
+     * for authenticated sessions.</p>
+     * 
+     * @param loginRequest login credentials (username/email and password)
+     * @return AuthResponse containing JWT tokens and user information
+     * @throws RuntimeException if credentials are invalid or account is not verified
      */
     AuthResponse login(LoginRequest loginRequest);
     

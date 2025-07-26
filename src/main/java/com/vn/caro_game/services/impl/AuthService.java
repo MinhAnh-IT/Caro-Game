@@ -1,4 +1,4 @@
-package com.vn.caro_game.services;
+package com.vn.caro_game.services.impl;
 
 import com.vn.caro_game.constants.ApplicationConstants;
 import com.vn.caro_game.constants.EmailConstants;
@@ -14,6 +14,7 @@ import com.vn.caro_game.integrations.jwt.JwtService;
 import com.vn.caro_game.integrations.redis.OtpService;
 import com.vn.caro_game.mappers.UserMapper;
 import com.vn.caro_game.repositories.UserRepository;
+import com.vn.caro_game.services.interfaces.AuthServiceInterface;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
-public class AuthService {
+public class AuthService implements AuthServiceInterface {
     
     final UserRepository userRepository;
     final UserMapper userMapper;

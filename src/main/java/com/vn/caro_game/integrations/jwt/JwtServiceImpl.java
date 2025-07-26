@@ -19,6 +19,39 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+/**
+ * JWT Service implementation for token management and validation.
+ * 
+ * <p>This service provides comprehensive JWT token operations including generation,
+ * validation, blacklisting, and claim extraction. It integrates with Redis for
+ * token blacklisting and supports both access and refresh tokens.</p>
+ * 
+ * <h3>Token Structure:</h3>
+ * <ul>
+ *   <li><strong>Subject:</strong> User's email address</li>
+ *   <li><strong>Claims:</strong> userId, username (for access tokens)</li>
+ *   <li><strong>Security:</strong> HMAC SHA-256 signature</li>
+ * </ul>
+ * 
+ * <h3>Token Types:</h3>
+ * <ul>
+ *   <li><strong>Access Token:</strong> Short-lived, contains user claims</li>
+ *   <li><strong>Refresh Token:</strong> Long-lived, minimal claims</li>
+ * </ul>
+ * 
+ * <h3>Security Features:</h3>
+ * <ul>
+ *   <li>Token blacklisting in Redis for logout functionality</li>
+ *   <li>Automatic token expiration handling</li>
+ *   <li>Bearer token prefix support</li>
+ *   <li>Secure token validation with exception handling</li>
+ * </ul>
+ * 
+ * @author Caro Game Team
+ * @since 1.0.0
+ * @see JwtService
+ * @see User
+ */
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -91,6 +124,28 @@ public class JwtServiceImpl implements JwtService {
         return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + token));
     }
     
+    // Implementation from JwtUtil
+    @Override
+    public Long getUserIdFromToken(String token) {
+        Claims claims = extractAllClaims(cleanToken(token));
+        return claims.get("userId", Long.class);
+    }
+    
+    @Override
+    public boolean validateToken(String token) {
+        try {
+            extractAllClaims(cleanToken(token));
+            return !isTokenBlacklisted(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    // Helper method to clean token (remove "Bearer " prefix if present)
+    private String cleanToken(String token) {
+        return token.replace("Bearer ", "");
+    }
+    
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -114,7 +169,7 @@ public class JwtServiceImpl implements JwtService {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
+                .parseClaimsJws(cleanToken(token))
                 .getBody();
     }
     

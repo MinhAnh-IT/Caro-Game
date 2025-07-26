@@ -6,7 +6,7 @@ import com.vn.caro_game.dtos.request.*;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.AuthResponse;
 import com.vn.caro_game.dtos.response.UserResponse;
-import com.vn.caro_game.services.AuthService;
+import com.vn.caro_game.services.impl.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

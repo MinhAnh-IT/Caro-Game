@@ -14,6 +14,7 @@ import com.vn.caro_game.integrations.jwt.JwtService;
 import com.vn.caro_game.integrations.redis.OtpService;
 import com.vn.caro_game.mappers.UserMapper;
 import com.vn.caro_game.repositories.UserRepository;
+import com.vn.caro_game.services.impl.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
