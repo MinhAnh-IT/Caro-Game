@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(
                             "/v3/api-docs/**",
