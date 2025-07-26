@@ -5,6 +5,7 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.lang.Nullable;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +18,9 @@ public class UserStatusRedisSubscriber implements RedisSubscriber, MessageListen
     }
 
     @Override
-    public void onMessage(Message message, byte[] pattern) {
-        onMessage(new String(pattern), new String(message.getBody()));
+    public void onMessage(Message message, @Nullable byte[] pattern) {
+        String patternStr = pattern != null ? new String(pattern) : null;
+        String messageStr = new String(message.getBody());
+        onMessage(patternStr, messageStr);
     }
 }
