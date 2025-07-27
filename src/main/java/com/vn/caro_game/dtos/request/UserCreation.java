@@ -20,6 +20,9 @@ public class UserCreation {
     @Pattern(regexp = ValidationConstants.USERNAME_PATTERN, message = ValidationConstants.USERNAME_PATTERN_MESSAGE)
     String username;
     
+    @Size(max = 50, message = "Display name cannot exceed 50 characters")
+    String displayName;
+
     @NotBlank(message = ValidationConstants.PASSWORD_BLANK_MESSAGE)
     @Size(min = ValidationConstants.PASSWORD_MIN_LENGTH, max = ValidationConstants.PASSWORD_MAX_LENGTH, 
           message = ValidationConstants.PASSWORD_SIZE_MESSAGE)

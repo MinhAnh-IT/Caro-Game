@@ -31,13 +31,16 @@ public class User {
     @Column(unique = true, nullable = false)
     String email;
     
+    @Column(name = "display_name", length = 50)
+    String displayName;
+
     @Column(name = "avatar_url")
     String avatarUrl;
     
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt;
-    
+
     // Relationships
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<GameRoom> createdRooms = new HashSet<>();

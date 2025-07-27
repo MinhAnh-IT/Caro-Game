@@ -27,13 +27,17 @@ public enum StatusCode {
     USER_NOT_FOUND(4009, "User not found"),
     EMAIL_NOT_FOUND(4010, "Email not found in system"),
     
+    // Validation errors
+    INVALID_REQUEST(4011, "Invalid request data"),
+
     // File handling errors
     ERROR_CONVERT_IMAGE(5001, "Error converting image"),
     ERROR_SAVE_FILE(5002, "Error while saving file"),
-    
+    FILE_UPLOAD_ERROR(5003, "File upload failed"),
+
     // Email errors
-    EMAIL_SEND_FAILED(5003, "Failed to send email");
-    
+    EMAIL_SEND_FAILED(5004, "Failed to send email");
+
     int code;
     String message;
 

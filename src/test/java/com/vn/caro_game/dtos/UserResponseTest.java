@@ -18,6 +18,7 @@ class UserResponseTest {
         Long id = 1L;
         String username = "testuser";
         String email = "test@example.com";
+        String displayName = "Test User";
         String avatarUrl = "https://example.com/avatar.jpg";
         LocalDateTime createdAt = LocalDateTime.now();
 
@@ -26,6 +27,7 @@ class UserResponseTest {
                 .id(id)
                 .username(username)
                 .email(email)
+                .displayName(displayName)
                 .avatarUrl(avatarUrl)
                 .createdAt(createdAt)
                 .build();
@@ -34,6 +36,7 @@ class UserResponseTest {
         assertThat(response.getId()).isEqualTo(id);
         assertThat(response.getUsername()).isEqualTo(username);
         assertThat(response.getEmail()).isEqualTo(email);
+        assertThat(response.getDisplayName()).isEqualTo(displayName);
         assertThat(response.getAvatarUrl()).isEqualTo(avatarUrl);
         assertThat(response.getCreatedAt()).isEqualTo(createdAt);
     }
@@ -48,6 +51,7 @@ class UserResponseTest {
         assertThat(response.getId()).isNull();
         assertThat(response.getUsername()).isNull();
         assertThat(response.getEmail()).isNull();
+        assertThat(response.getDisplayName()).isNull();
         assertThat(response.getAvatarUrl()).isNull();
         assertThat(response.getCreatedAt()).isNull();
     }
@@ -59,16 +63,18 @@ class UserResponseTest {
         Long id = 1L;
         String username = "testuser";
         String email = "test@example.com";
+        String displayName = "Test User";
         String avatarUrl = "https://example.com/avatar.jpg";
         LocalDateTime createdAt = LocalDateTime.now();
 
         // When
-        UserResponse response = new UserResponse(id, username, email, avatarUrl, createdAt);
+        UserResponse response = new UserResponse(id, username, email, displayName, avatarUrl, createdAt);
 
         // Then
         assertThat(response.getId()).isEqualTo(id);
         assertThat(response.getUsername()).isEqualTo(username);
         assertThat(response.getEmail()).isEqualTo(email);
+        assertThat(response.getDisplayName()).isEqualTo(displayName);
         assertThat(response.getAvatarUrl()).isEqualTo(avatarUrl);
         assertThat(response.getCreatedAt()).isEqualTo(createdAt);
     }
@@ -81,6 +87,7 @@ class UserResponseTest {
                 .id(null)
                 .username(null)
                 .email(null)
+                .displayName(null)
                 .avatarUrl(null)
                 .createdAt(null)
                 .build();
@@ -89,6 +96,7 @@ class UserResponseTest {
         assertThat(response.getId()).isNull();
         assertThat(response.getUsername()).isNull();
         assertThat(response.getEmail()).isNull();
+        assertThat(response.getDisplayName()).isNull();
         assertThat(response.getAvatarUrl()).isNull();
         assertThat(response.getCreatedAt()).isNull();
     }
@@ -101,6 +109,7 @@ class UserResponseTest {
         Long id = 1L;
         String username = "testuser";
         String email = "test@example.com";
+        String displayName = "Test User";
         String avatarUrl = "https://example.com/avatar.jpg";
         LocalDateTime createdAt = LocalDateTime.now();
 
@@ -108,6 +117,7 @@ class UserResponseTest {
         response.setId(id);
         response.setUsername(username);
         response.setEmail(email);
+        response.setDisplayName(displayName);
         response.setAvatarUrl(avatarUrl);
         response.setCreatedAt(createdAt);
 
@@ -115,31 +125,8 @@ class UserResponseTest {
         assertThat(response.getId()).isEqualTo(id);
         assertThat(response.getUsername()).isEqualTo(username);
         assertThat(response.getEmail()).isEqualTo(email);
+        assertThat(response.getDisplayName()).isEqualTo(displayName);
         assertThat(response.getAvatarUrl()).isEqualTo(avatarUrl);
         assertThat(response.getCreatedAt()).isEqualTo(createdAt);
-    }
-
-    @Test
-    @DisplayName("Should create UserResponse with builder pattern")
-    void shouldCreateUserResponseWithBuilderPattern() {
-        // Given
-        LocalDateTime now = LocalDateTime.now();
-
-        // When
-        UserResponse response = UserResponse.builder()
-                .id(1L)
-                .username("john_doe")
-                .email("john@example.com")
-                .avatarUrl("https://example.com/avatar.jpg")
-                .createdAt(now)
-                .build();
-
-        // Then
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(1L);
-        assertThat(response.getUsername()).isEqualTo("john_doe");
-        assertThat(response.getEmail()).isEqualTo("john@example.com");
-        assertThat(response.getAvatarUrl()).isEqualTo("https://example.com/avatar.jpg");
-        assertThat(response.getCreatedAt()).isEqualTo(now);
     }
 }

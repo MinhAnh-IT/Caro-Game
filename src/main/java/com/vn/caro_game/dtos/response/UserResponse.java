@@ -15,6 +15,7 @@ public class UserResponse {
     Long id;
     String username;
     String email;
+    String displayName;
     String avatarUrl;
     LocalDateTime createdAt;
 }
