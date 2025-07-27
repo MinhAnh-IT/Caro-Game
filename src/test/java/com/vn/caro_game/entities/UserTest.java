@@ -1,6 +1,5 @@
 package com.vn.caro_game.entities;
 
-import com.vn.caro_game.enums.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,6 @@ class UserTest {
         assertThat(user.getPassword()).isNull();
         assertThat(user.getEmail()).isNull();
         assertThat(user.getAvatarUrl()).isNull();
-        assertThat(user.getStatus()).isEqualTo(UserStatus.OFFLINE); // Default value
         assertThat(user.getCreatedAt()).isNull();
     }
 
@@ -40,7 +38,6 @@ class UserTest {
         String password = "password123";
         String email = "test@example.com";
         String avatarUrl = "http://example.com/avatar.jpg";
-        UserStatus status = UserStatus.ONLINE;
         LocalDateTime createdAt = LocalDateTime.now();
 
         // When
@@ -49,7 +46,6 @@ class UserTest {
         user.setPassword(password);
         user.setEmail(email);
         user.setAvatarUrl(avatarUrl);
-        user.setStatus(status);
         user.setCreatedAt(createdAt);
 
         // Then
@@ -58,7 +54,6 @@ class UserTest {
         assertThat(user.getPassword()).isEqualTo(password);
         assertThat(user.getEmail()).isEqualTo(email);
         assertThat(user.getAvatarUrl()).isEqualTo(avatarUrl);
-        assertThat(user.getStatus()).isEqualTo(status);
         assertThat(user.getCreatedAt()).isEqualTo(createdAt);
     }
 
@@ -71,7 +66,6 @@ class UserTest {
         user.setPassword(null);
         user.setEmail(null);
         user.setAvatarUrl(null);
-        user.setStatus(null);
         user.setCreatedAt(null);
 
         // Then
@@ -80,7 +74,6 @@ class UserTest {
         assertThat(user.getPassword()).isNull();
         assertThat(user.getEmail()).isNull();
         assertThat(user.getAvatarUrl()).isNull();
-        assertThat(user.getStatus()).isNull();
         assertThat(user.getCreatedAt()).isNull();
     }
 
@@ -90,29 +83,14 @@ class UserTest {
         // Given - Initial values
         user.setUsername("oldusername");
         user.setEmail("old@example.com");
-        user.setStatus(UserStatus.OFFLINE);
 
         // When - Update values
         user.setUsername("newusername");
         user.setEmail("new@example.com");
-        user.setStatus(UserStatus.ONLINE);
 
         // Then
         assertThat(user.getUsername()).isEqualTo("newusername");
         assertThat(user.getEmail()).isEqualTo("new@example.com");
-        assertThat(user.getStatus()).isEqualTo(UserStatus.ONLINE);
-    }
-
-    @Test
-    @DisplayName("Should handle UserStatus enum correctly")
-    void shouldHandleUserStatusEnumCorrectly() {
-        // When - Set ONLINE status
-        user.setStatus(UserStatus.ONLINE);
-        assertThat(user.getStatus()).isEqualTo(UserStatus.ONLINE);
-
-        // When - Set OFFLINE status
-        user.setStatus(UserStatus.OFFLINE);
-        assertThat(user.getStatus()).isEqualTo(UserStatus.OFFLINE);
     }
 
     @Test
