@@ -50,15 +50,10 @@ public class UserProfileService {
      */
     @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(Long userId) {
-        log.info("Getting profile for user ID: {}", userId);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", StatusCode.USER_NOT_FOUND));
 
-        UserProfileResponse response = userMapper.toProfileResponse(user);
-        log.info("Successfully retrieved profile for user: {}", user.getUsername());
-
-        return response;
+        return userMapper.toProfileResponse(user);
     }
 
     /**
@@ -71,8 +66,6 @@ public class UserProfileService {
      */
     @Transactional
     public UserProfileResponse updateProfile(Long userId, UpdateProfileRequest request) {
-        log.info("Updating profile for user ID: {} with data: {}", userId, request);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", StatusCode.USER_NOT_FOUND));
 
@@ -86,7 +79,6 @@ public class UserProfileService {
 
         // Save updated user
         User savedUser = userRepository.save(user);
-        log.info("Successfully updated profile for user: {}", savedUser.getUsername());
 
         return userMapper.toProfileResponse(savedUser);
     }
@@ -101,7 +93,6 @@ public class UserProfileService {
      */
     @Transactional
     public UserProfileResponse updateAvatar(Long userId, MultipartFile avatarFile) {
-        log.info("Updating avatar for user ID: {}", userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", StatusCode.USER_NOT_FOUND));
@@ -118,8 +109,6 @@ public class UserProfileService {
         user.setAvatarUrl(newAvatarUrl);
         User savedUser = userRepository.save(user);
 
-        log.info("Successfully updated avatar for user: {}", savedUser.getUsername());
-
         return userMapper.toProfileResponse(savedUser);
     }
 
@@ -134,7 +123,6 @@ public class UserProfileService {
      */
     @Transactional
     public UserProfileResponse updateProfileWithAvatar(Long userId, UpdateProfileRequest request, MultipartFile avatarFile) {
-        log.info("Updating profile and avatar for user ID: {}", userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", StatusCode.USER_NOT_FOUND));
@@ -161,7 +149,6 @@ public class UserProfileService {
 
         // Save updated user
         User savedUser = userRepository.save(user);
-        log.info("Successfully updated profile and avatar for user: {}", savedUser.getUsername());
 
         return userMapper.toProfileResponse(savedUser);
     }

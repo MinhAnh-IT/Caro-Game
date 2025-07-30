@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -51,34 +49,41 @@ import java.util.Map;
 @Tag(name = "Development WebSocket", description = "WebSocket testing endpoints (Dev only)")
 public class DevWebSocketController {
     
-    private static final Logger logger = LoggerFactory.getLogger(DevWebSocketController.class);
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisService redisService;
     private static final long ONLINE_TTL = 300;
-    
-    @Operation(summary = "WebSocket Health Check", description = "Test endpoint to verify WebSocket controller is working")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Controller is working properly")
-    })
+
+    /**
+     * Health check endpoint for WebSocket testing.
+     * 
+     * @return success message
+     */
     @GetMapping("/api/test/websocket")
     @ResponseBody
+    @Operation(summary = "WebSocket health check", description = "Test endpoint to verify WebSocket controller is active")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Controller is working")
+    })
     public String testEndpoint() {
-        logger.info("=== TEST HTTP ENDPOINT CALLED ===");
         return "DevWebSocketController is working!";
     }
-    
-    @Operation(summary = "Send Test Pong Message", description = "Sends a test message to /topic/pong for WebSocket testing")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Test message sent successfully")
-    })
+
+    /**
+     * Test endpoint to send a message to WebSocket topic.
+     * 
+     * @return confirmation message
+     */
     @GetMapping("/api/test/send-pong")
     @ResponseBody
+    @Operation(summary = "Send test message", description = "Send a test message to WebSocket topic")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Message sent successfully")
+    })
     public String testSendPong() {
-        logger.info("=== SENDING TEST PONG MESSAGE ===");
         messagingTemplate.convertAndSend("/topic/pong", "Test pong from server!");
         return "Pong message sent to /topic/pong";
     }
-    
+
     /**
      * Handles WebSocket ping messages and responds with pong.
      * 
@@ -93,30 +98,19 @@ public class DevWebSocketController {
     @MessageMapping("/ping")
     @SendTo("/topic/pong")
     public String handlePing(String message, StompHeaderAccessor headerAccessor) {
-        logger.info("=== RECEIVED PING MESSAGE: {} ===", message);
-        System.out.println("=== RECEIVED PING MESSAGE: " + message + " ===");
-        
         try {
             // Refresh user online status if session has userId
             Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
-            logger.info("=== SESSION ATTRIBUTES: {} ===", sessionAttributes);
-            
+
             if (sessionAttributes != null) {
                 Long userId = (Long) sessionAttributes.get("userId");
-                logger.info("=== USER ID FROM SESSION: {} ===", userId);
-                
+
                 if (userId != null) {
                     // Refresh online TTL for this user
                     redisService.refreshUserOnline(userId, ONLINE_TTL);
-                    logger.info("=== REFRESHED ONLINE STATUS FOR USER {} WITH TTL {} ===", userId, ONLINE_TTL);
-                } else {
-                    logger.warn("=== NO USER ID IN SESSION ATTRIBUTES ===");
                 }
-            } else {
-                logger.warn("=== SESSION ATTRIBUTES IS NULL ===");
             }
         } catch (Exception e) {
-            logger.warn("Failed to refresh online status on ping: {}", e.getMessage());
             e.printStackTrace();
         }
         

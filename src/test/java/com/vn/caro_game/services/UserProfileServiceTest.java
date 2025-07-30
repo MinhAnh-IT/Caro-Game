@@ -3,6 +3,7 @@ package com.vn.caro_game.services;
 import com.vn.caro_game.dtos.request.UpdateProfileRequest;
 import com.vn.caro_game.dtos.response.UserProfileResponse;
 import com.vn.caro_game.entities.User;
+import com.vn.caro_game.enums.StatusCode;
 import com.vn.caro_game.exceptions.CustomException;
 import com.vn.caro_game.mappers.UserMapper;
 import com.vn.caro_game.repositories.UserRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -24,10 +26,13 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for UserProfileService.
+ * Comprehensive test suite for UserProfileService.
  *
- * <p>This test class covers all functionality of UserProfileService including
- * profile retrieval, updates, avatar management, and error scenarios.</p>
+ * <p>Tests all business logic scenarios including success cases, validation failures,
+ * and error conditions. Follows clean code and testing best practices.</p>
+ *
+ * @author Caro Game Team
+ * @since 1.0.0
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserProfileService Tests")
@@ -42,37 +47,38 @@ class UserProfileServiceTest {
     @Mock
     private FileUploadService fileUploadService;
 
-    @Mock
-    private MultipartFile avatarFile;
-
     @InjectMocks
     private UserProfileService userProfileService;
 
     private User testUser;
-    private UpdateProfileRequest updateRequest;
-    private UserProfileResponse profileResponse;
+    private UserProfileResponse testUserProfileResponse;
+    private UpdateProfileRequest testUpdateRequest;
 
     @BeforeEach
     void setUp() {
+        // Setup test user
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
         testUser.setDisplayName("Test User");
-        testUser.setAvatarUrl("/uploads/avatars/test.jpg");
+        testUser.setAvatarUrl("/uploads/avatars/test_avatar.jpg");
         testUser.setCreatedAt(LocalDateTime.now());
 
-        updateRequest = new UpdateProfileRequest();
-        updateRequest.setUsername("newusername");
-        updateRequest.setDisplayName("New Display Name");
-
-        profileResponse = UserProfileResponse.builder()
+        // Setup UserProfileResponse
+        testUserProfileResponse = UserProfileResponse.builder()
                 .id(1L)
                 .username("testuser")
                 .email("test@example.com")
                 .displayName("Test User")
-                .avatarUrl("/uploads/avatars/test.jpg")
+                .avatarUrl("/uploads/avatars/test_avatar.jpg")
                 .createdAt(LocalDateTime.now())
+                .build();
+
+        // Setup UpdateProfileRequest
+        testUpdateRequest = UpdateProfileRequest.builder()
+                .username("updateduser")
+                .displayName("Updated User")
                 .build();
     }
 
@@ -81,11 +87,11 @@ class UserProfileServiceTest {
     class GetUserProfileTests {
 
         @Test
-        @DisplayName("Should return user profile when user exists")
-        void shouldReturnUserProfileWhenUserExists() {
+        @DisplayName("Should return user profile successfully when user exists")
+        void shouldReturnUserProfileSuccessfully() {
             // Given
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
             UserProfileResponse result = userProfileService.getUserProfile(1L);
@@ -103,14 +109,16 @@ class UserProfileServiceTest {
 
         @Test
         @DisplayName("Should throw CustomException when user not found")
-        void shouldThrowCustomExceptionWhenUserNotFound() {
+        void shouldThrowExceptionWhenUserNotFound() {
             // Given
             when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> userProfileService.getUserProfile(1L))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("User not found");
+                    .hasMessage("User not found")
+                    .extracting("statusCode")
+                    .isEqualTo(StatusCode.USER_NOT_FOUND);
 
             verify(userRepository).findById(1L);
             verify(userMapper, never()).toProfileResponse(any());
@@ -122,22 +130,27 @@ class UserProfileServiceTest {
     class UpdateProfileTests {
 
         @Test
-        @DisplayName("Should update profile successfully when username is unchanged")
+        @DisplayName("Should update profile successfully when username unchanged")
         void shouldUpdateProfileSuccessfullyWhenUsernameUnchanged() {
             // Given
-            updateRequest.setUsername("testuser"); // Same username
+            testUpdateRequest.setUsername("testuser"); // Same username
+
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
-            UserProfileResponse result = userProfileService.updateProfile(1L, updateRequest);
+            UserProfileResponse result = userProfileService.updateProfile(1L, testUpdateRequest);
 
             // Then
             assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(1L);
+
             verify(userRepository).findById(1L);
-            verify(userMapper).updateUserFromRequest(testUser, updateRequest);
+            verify(userMapper).updateUserFromRequest(testUser, testUpdateRequest);
             verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
+            // Should not check username uniqueness since username unchanged
             verify(userRepository, never()).existsByUsernameAndIdNot(anyString(), anyLong());
         }
 
@@ -146,52 +159,57 @@ class UserProfileServiceTest {
         void shouldUpdateProfileSuccessfullyWhenNewUsernameIsUnique() {
             // Given
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByUsernameAndIdNot("newusername", 1L)).thenReturn(false);
+            when(userRepository.existsByUsernameAndIdNot("updateduser", 1L)).thenReturn(false);
             when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
-            UserProfileResponse result = userProfileService.updateProfile(1L, updateRequest);
+            UserProfileResponse result = userProfileService.updateProfile(1L, testUpdateRequest);
 
             // Then
             assertThat(result).isNotNull();
+
             verify(userRepository).findById(1L);
-            verify(userRepository).existsByUsernameAndIdNot("newusername", 1L);
-            verify(userMapper).updateUserFromRequest(testUser, updateRequest);
+            verify(userRepository).existsByUsernameAndIdNot("updateduser", 1L);
+            verify(userMapper).updateUserFromRequest(testUser, testUpdateRequest);
             verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
         }
 
         @Test
-        @DisplayName("Should throw CustomException when username already exists")
-        void shouldThrowCustomExceptionWhenUsernameAlreadyExists() {
-            // Given
-            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByUsernameAndIdNot("newusername", 1L)).thenReturn(true);
-
-            // When & Then
-            assertThatThrownBy(() -> userProfileService.updateProfile(1L, updateRequest))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("Username already exists");
-
-            verify(userRepository).findById(1L);
-            verify(userRepository).existsByUsernameAndIdNot("newusername", 1L);
-            verify(userMapper, never()).updateUserFromRequest(any(), any());
-            verify(userRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("Should throw CustomException when user not found")
-        void shouldThrowCustomExceptionWhenUserNotFoundForUpdate() {
+        @DisplayName("Should throw exception when user not found")
+        void shouldThrowExceptionWhenUserNotFoundForUpdate() {
             // Given
             when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> userProfileService.updateProfile(1L, updateRequest))
+            assertThatThrownBy(() -> userProfileService.updateProfile(1L, testUpdateRequest))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("User not found");
+                    .hasMessage("User not found")
+                    .extracting("statusCode")
+                    .isEqualTo(StatusCode.USER_NOT_FOUND);
 
             verify(userRepository).findById(1L);
-            verify(userMapper, never()).updateUserFromRequest(any(), any());
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when username already exists")
+        void shouldThrowExceptionWhenUsernameAlreadyExists() {
+            // Given
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(userRepository.existsByUsernameAndIdNot("updateduser", 1L)).thenReturn(true);
+
+            // When & Then
+            assertThatThrownBy(() -> userProfileService.updateProfile(1L, testUpdateRequest))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage("Username already exists")
+                    .extracting("statusCode")
+                    .isEqualTo(StatusCode.USERNAME_ALREADY_EXISTS);
+
+            verify(userRepository).findById(1L);
+            verify(userRepository).existsByUsernameAndIdNot("updateduser", 1L);
+            verify(userRepository, never()).save(any());
         }
     }
 
@@ -199,62 +217,85 @@ class UserProfileServiceTest {
     @DisplayName("Update Avatar Tests")
     class UpdateAvatarTests {
 
-        @Test
-        @DisplayName("Should update avatar successfully")
-        void shouldUpdateAvatarSuccessfully() {
-            // Given
-            String newAvatarUrl = "/uploads/avatars/new_avatar.jpg";
-            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(fileUploadService.uploadAvatar(avatarFile, 1L)).thenReturn(newAvatarUrl);
-            when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+        private MultipartFile mockAvatarFile;
 
-            // When
-            UserProfileResponse result = userProfileService.updateAvatar(1L, avatarFile);
-
-            // Then
-            assertThat(result).isNotNull();
-            verify(userRepository).findById(1L);
-            verify(fileUploadService).deleteAvatar("/uploads/avatars/test.jpg");
-            verify(fileUploadService).uploadAvatar(avatarFile, 1L);
-            verify(userRepository).save(testUser);
+        @BeforeEach
+        void setUp() {
+            mockAvatarFile = new MockMultipartFile(
+                    "avatar",
+                    "test-avatar.jpg",
+                    "image/jpeg",
+                    "test image content".getBytes()
+            );
         }
 
         @Test
-        @DisplayName("Should update avatar without deleting old one when no existing avatar")
-        void shouldUpdateAvatarWithoutDeletingWhenNoExistingAvatar() {
+        @DisplayName("Should update avatar successfully for user without existing avatar")
+        void shouldUpdateAvatarSuccessfullyForUserWithoutExistingAvatar() {
             // Given
-            testUser.setAvatarUrl(null);
-            String newAvatarUrl = "/uploads/avatars/new_avatar.jpg";
+            testUser.setAvatarUrl(null); // No existing avatar
+            String newAvatarUrl = "/uploads/avatars/user_1_avatar_new.jpg";
+
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(fileUploadService.uploadAvatar(avatarFile, 1L)).thenReturn(newAvatarUrl);
+            when(fileUploadService.uploadAvatar(mockAvatarFile, 1L)).thenReturn(newAvatarUrl);
             when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
-            UserProfileResponse result = userProfileService.updateAvatar(1L, avatarFile);
+            UserProfileResponse result = userProfileService.updateAvatar(1L, mockAvatarFile);
 
             // Then
             assertThat(result).isNotNull();
+
             verify(userRepository).findById(1L);
-            verify(fileUploadService, never()).deleteAvatar(anyString());
-            verify(fileUploadService).uploadAvatar(avatarFile, 1L);
+            verify(fileUploadService, never()).deleteAvatar(anyString()); // No existing avatar to delete
+            verify(fileUploadService).uploadAvatar(mockAvatarFile, 1L);
             verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
         }
 
         @Test
-        @DisplayName("Should throw CustomException when user not found")
-        void shouldThrowCustomExceptionWhenUserNotFoundForAvatar() {
+        @DisplayName("Should update avatar successfully and delete old avatar when user has existing avatar")
+        void shouldUpdateAvatarSuccessfullyAndDeleteOldAvatar() {
+            // Given
+            String oldAvatarUrl = "/uploads/avatars/old_avatar.jpg";
+            String newAvatarUrl = "/uploads/avatars/user_1_avatar_new.jpg";
+            testUser.setAvatarUrl(oldAvatarUrl);
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(fileUploadService.uploadAvatar(mockAvatarFile, 1L)).thenReturn(newAvatarUrl);
+            when(userRepository.save(testUser)).thenReturn(testUser);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
+
+            // When
+            UserProfileResponse result = userProfileService.updateAvatar(1L, mockAvatarFile);
+
+            // Then
+            assertThat(result).isNotNull();
+
+            verify(userRepository).findById(1L);
+            verify(fileUploadService).deleteAvatar(oldAvatarUrl); // Should delete old avatar
+            verify(fileUploadService).uploadAvatar(mockAvatarFile, 1L);
+            verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
+        }
+
+        @Test
+        @DisplayName("Should throw exception when user not found for avatar update")
+        void shouldThrowExceptionWhenUserNotFoundForAvatarUpdate() {
             // Given
             when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
             // When & Then
-            assertThatThrownBy(() -> userProfileService.updateAvatar(1L, avatarFile))
+            assertThatThrownBy(() -> userProfileService.updateAvatar(1L, mockAvatarFile))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("User not found");
+                    .hasMessage("User not found")
+                    .extracting("statusCode")
+                    .isEqualTo(StatusCode.USER_NOT_FOUND);
 
             verify(userRepository).findById(1L);
-            verify(fileUploadService, never()).uploadAvatar(any(), any());
+            verify(fileUploadService, never()).uploadAvatar(any(), anyLong());
+            verify(userRepository, never()).save(any());
         }
     }
 
@@ -262,72 +303,95 @@ class UserProfileServiceTest {
     @DisplayName("Update Profile With Avatar Tests")
     class UpdateProfileWithAvatarTests {
 
+        private MultipartFile mockAvatarFile;
+
+        @BeforeEach
+        void setUp() {
+            mockAvatarFile = new MockMultipartFile(
+                    "avatar",
+                    "test-avatar.jpg",
+                    "image/jpeg",
+                    "test image content".getBytes()
+            );
+        }
+
         @Test
         @DisplayName("Should update both profile and avatar successfully")
         void shouldUpdateBothProfileAndAvatarSuccessfully() {
             // Given
-            String newAvatarUrl = "/uploads/avatars/new_avatar.jpg";
+            String oldAvatarUrl = "/uploads/avatars/old_avatar.jpg";
+            String newAvatarUrl = "/uploads/avatars/user_1_avatar_new.jpg";
+            testUser.setAvatarUrl(oldAvatarUrl);
+
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByUsernameAndIdNot("newusername", 1L)).thenReturn(false);
-            when(avatarFile.isEmpty()).thenReturn(false);
-            when(fileUploadService.uploadAvatar(avatarFile, 1L)).thenReturn(newAvatarUrl);
+            when(userRepository.existsByUsernameAndIdNot("updateduser", 1L)).thenReturn(false);
+            when(fileUploadService.uploadAvatar(mockAvatarFile, 1L)).thenReturn(newAvatarUrl);
             when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
-            UserProfileResponse result = userProfileService.updateProfileWithAvatar(1L, updateRequest, avatarFile);
+            UserProfileResponse result = userProfileService.updateProfileWithAvatar(1L, testUpdateRequest, mockAvatarFile);
 
             // Then
             assertThat(result).isNotNull();
+
             verify(userRepository).findById(1L);
-            verify(userRepository).existsByUsernameAndIdNot("newusername", 1L);
-            verify(userMapper).updateUserFromRequest(testUser, updateRequest);
-            verify(fileUploadService).deleteAvatar("/uploads/avatars/test.jpg");
-            verify(fileUploadService).uploadAvatar(avatarFile, 1L);
+            verify(userRepository).existsByUsernameAndIdNot("updateduser", 1L);
+            verify(userMapper).updateUserFromRequest(testUser, testUpdateRequest);
+            verify(fileUploadService).deleteAvatar(oldAvatarUrl);
+            verify(fileUploadService).uploadAvatar(mockAvatarFile, 1L);
             verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
         }
 
         @Test
-        @DisplayName("Should update only profile when no avatar provided")
-        void shouldUpdateOnlyProfileWhenNoAvatarProvided() {
+        @DisplayName("Should update only profile when avatar file is null")
+        void shouldUpdateOnlyProfileWhenAvatarFileIsNull() {
             // Given
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByUsernameAndIdNot("newusername", 1L)).thenReturn(false);
+            when(userRepository.existsByUsernameAndIdNot("updateduser", 1L)).thenReturn(false);
             when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
-            UserProfileResponse result = userProfileService.updateProfileWithAvatar(1L, updateRequest, null);
+            UserProfileResponse result = userProfileService.updateProfileWithAvatar(1L, testUpdateRequest, null);
 
             // Then
             assertThat(result).isNotNull();
+
             verify(userRepository).findById(1L);
-            verify(userRepository).existsByUsernameAndIdNot("newusername", 1L);
-            verify(userMapper).updateUserFromRequest(testUser, updateRequest);
-            verify(fileUploadService, never()).uploadAvatar(any(), any());
+            verify(userRepository).existsByUsernameAndIdNot("updateduser", 1L);
+            verify(userMapper).updateUserFromRequest(testUser, testUpdateRequest);
+            verify(fileUploadService, never()).deleteAvatar(anyString());
+            verify(fileUploadService, never()).uploadAvatar(any(), anyLong());
             verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
         }
 
         @Test
-        @DisplayName("Should update only profile when empty avatar provided")
-        void shouldUpdateOnlyProfileWhenEmptyAvatarProvided() {
+        @DisplayName("Should update only profile when avatar file is empty")
+        void shouldUpdateOnlyProfileWhenAvatarFileIsEmpty() {
             // Given
+            MockMultipartFile emptyFile = new MockMultipartFile("avatar", "", "image/jpeg", new byte[0]);
+
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-            when(userRepository.existsByUsernameAndIdNot("newusername", 1L)).thenReturn(false);
-            when(avatarFile.isEmpty()).thenReturn(true);
+            when(userRepository.existsByUsernameAndIdNot("updateduser", 1L)).thenReturn(false);
             when(userRepository.save(testUser)).thenReturn(testUser);
-            when(userMapper.toProfileResponse(testUser)).thenReturn(profileResponse);
+            when(userMapper.toProfileResponse(testUser)).thenReturn(testUserProfileResponse);
 
             // When
-            UserProfileResponse result = userProfileService.updateProfileWithAvatar(1L, updateRequest, avatarFile);
+            UserProfileResponse result = userProfileService.updateProfileWithAvatar(1L, testUpdateRequest, emptyFile);
 
             // Then
             assertThat(result).isNotNull();
+
             verify(userRepository).findById(1L);
-            verify(userRepository).existsByUsernameAndIdNot("newusername", 1L);
-            verify(userMapper).updateUserFromRequest(testUser, updateRequest);
-            verify(fileUploadService, never()).uploadAvatar(any(), any());
+            verify(userRepository).existsByUsernameAndIdNot("updateduser", 1L);
+            verify(userMapper).updateUserFromRequest(testUser, testUpdateRequest);
+            verify(fileUploadService, never()).deleteAvatar(anyString());
+            verify(fileUploadService, never()).uploadAvatar(any(), anyLong());
             verify(userRepository).save(testUser);
+            verify(userMapper).toProfileResponse(testUser);
         }
     }
 }

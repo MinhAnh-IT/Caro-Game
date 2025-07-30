@@ -133,7 +133,7 @@ public class FileUploadService {
         if (file.getSize() > maxAvatarSize) {
             throw new CustomException(
                     String.format("Avatar file size cannot exceed %d MB", maxAvatarSize / 1024 / 1024),
-                    StatusCode.INVALID_REQUEST);
+                    StatusCode.FILE_TOO_LARGE);
         }
 
         // Check content type
@@ -141,20 +141,20 @@ public class FileUploadService {
         if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
             throw new CustomException(
                     "Invalid file type. Only JPEG, PNG, GIF and WebP images are allowed",
-                    StatusCode.INVALID_REQUEST);
+                    StatusCode.INVALID_FILE_TYPE);
         }
 
         // Check file extension
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new CustomException("Invalid filename", StatusCode.INVALID_REQUEST);
+            throw new CustomException("Invalid filename", StatusCode.INVALID_FILE_TYPE);
         }
 
         String extension = getFileExtension(originalFilename);
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
             throw new CustomException(
                     "Invalid file extension. Only jpg, jpeg, png, gif, webp are allowed",
-                    StatusCode.INVALID_REQUEST);
+                    StatusCode.INVALID_FILE_TYPE);
         }
     }
 

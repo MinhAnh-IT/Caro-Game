@@ -16,9 +16,7 @@ public class RedisKeyspaceConfig {
             UserStatusRedisSubscriber userStatusRedisSubscriber) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        // Lắng nghe keyspace event cho key online:*
         container.addMessageListener(userStatusRedisSubscriber, new PatternTopic("__keyevent@*__:expired"));
-        // Lắng nghe pub/sub user-status
         container.addMessageListener(userStatusRedisSubscriber, new ChannelTopic("user-status"));
         return container;
     }

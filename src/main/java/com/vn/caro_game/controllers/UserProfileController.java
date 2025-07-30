@@ -1,118 +1,162 @@
 package com.vn.caro_game.controllers;
 
+import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.dtos.request.UpdateProfileRequest;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.UserProfileResponse;
-import com.vn.caro_game.integrations.jwt.JwtService;
 import com.vn.caro_game.services.UserProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * REST Controller for user profile management operations.
- *
- * <p>This controller provides endpoints for managing user profile information
- * including profile retrieval, updates, and avatar management. All endpoints
- * require JWT authentication.</p>
- *
- * <h3>Available Endpoints:</h3>
- * <ul>
- *   <li><strong>GET /api/profile</strong> - Get current user profile</li>
- *   <li><strong>PUT /api/profile</strong> - Update user profile information</li>
- *   <li><strong>POST /api/profile/avatar</strong> - Update user avatar</li>
- *   <li><strong>PUT /api/profile/complete</strong> - Update profile with avatar</li>
- * </ul>
- *
- * @author Caro Game Team
- * @since 1.0.0
- */
-@RestController
-@RequestMapping("/api/profile")
-@RequiredArgsConstructor
 @Slf4j
-@Tag(name = "User Profile", description = "User profile management endpoints")
-@SecurityRequirement(name = "Bearer Authentication")
+@RestController
+@RequestMapping("/api/user-profile")
+@RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Tag(
+    name = "User Profile Management",
+    description = "APIs for managing user profile information, updating user data, and handling avatar uploads"
+)
 public class UserProfileController {
 
-    private final UserProfileService userProfileService;
-    private final JwtService jwtService;
+    UserProfileService userProfileService;
 
-    /**
-     * Retrieves the current user's profile information.
-     *
-     * @param request HTTP request to extract JWT token
-     * @return ResponseEntity containing user profile information
-     */
-    @GetMapping
+    @GetMapping()
     @Operation(
-        summary = "Get user profile",
-        description = "Retrieves the current authenticated user's profile information"
+        summary = "Get current user profile",
+        description = """
+            Retrieves the profile information of the currently authenticated user.
+            
+            This endpoint returns comprehensive user profile data including:
+            - User identification details (ID, username, email)
+            - Display information (display name, avatar URL)
+            - Account metadata (creation timestamp)
+            
+            **Authentication Required**: This endpoint requires a valid JWT token in the Authorization header.
+            """,
+        operationId = "getCurrentUserProfile"
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
-            description = "Profile retrieved successfully",
-            content = @Content(schema = @Schema(implementation = UserProfileResponse.class))
+            description = "User profile retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ApiResponse.class),
+                examples = @ExampleObject(
+                    name = "Success Response",
+                    value = """
+                        {
+                          "success": true,
+                          "message": "User profile retrieved successfully",
+                          "data": {
+                            "id": 1,
+                            "username": "john_doe123",
+                            "email": "john@example.com",
+                            "displayName": "John Doe",
+                            "avatarUrl": "/uploads/avatars/user_1_avatar.jpg",
+                            "createdAt": "2024-01-01T10:00:00"
+                          }
+                        }
+                        """
+                )
+            )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Invalid or missing JWT token"
+            description = "Authentication required - Invalid or missing JWT token"
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
             description = "User not found"
         )
     })
-    public ResponseEntity<ApiResponse<UserProfileResponse>> getUserProfile(HttpServletRequest request) {
-        log.info("=== GET USER PROFILE REQUEST ===");
-
-        Long userId = getUserIdFromToken(request);
-        UserProfileResponse profile = userProfileService.getUserProfile(userId);
-
-        log.info("=== USER PROFILE RETRIEVED SUCCESSFULLY FOR USER: {} ===", userId);
-
-        return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", profile));
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getUserProfile(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        var result = userProfileService.getUserProfile(userDetails.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("User profile retrieved successfully", result));
     }
 
-    /**
-     * Updates the current user's profile information.
-     *
-     * @param request HTTP request to extract JWT token
-     * @param updateRequest the profile update request
-     * @return ResponseEntity containing updated user profile information
-     */
-    @PutMapping
+    @PutMapping()
     @Operation(
-        summary = "Update user profile",
-        description = "Updates the current authenticated user's profile information"
+        summary = "Update user profile information",
+        description = """
+            Updates the profile information of the currently authenticated user.
+            
+            **Updatable Fields:**
+            - Username (must be unique)
+            - Display name
+            - Email (must be unique and valid format)
+            
+            **Security:** Users can only update their own profile data.
+            **Validation:** All input data is validated before processing.
+            """,
+        operationId = "updateUserProfile"
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
             description = "Profile updated successfully",
-            content = @Content(schema = @Schema(implementation = UserProfileResponse.class))
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ApiResponse.class),
+                examples = @ExampleObject(
+                    name = "Success Response",
+                    value = """
+                        {
+                          "success": true,
+                          "message": "Profile updated successfully",
+                          "data": {
+                            "id": 1,
+                            "username": "john_doe_updated",
+                            "email": "john.updated@example.com",
+                            "displayName": "John Doe Updated",
+                            "avatarUrl": "/uploads/avatars/user_1_avatar.jpg",
+                            "createdAt": "2024-01-01T10:00:00"
+                          }
+                        }
+                        """
+                )
+            )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "Invalid request data or username already exists"
+            description = "Validation error - Invalid input data",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Validation Error",
+                    value = """
+                        {
+                          "success": false,
+                          "message": "Username already exists",
+                          "data": null
+                        }
+                        """
+                )
+            )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Invalid or missing JWT token"
+            description = "Authentication required"
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
@@ -120,142 +164,135 @@ public class UserProfileController {
         )
     })
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfile(
-            HttpServletRequest request,
-            @Valid @RequestBody UpdateProfileRequest updateRequest) {
-
-        log.info("=== UPDATE PROFILE REQUEST: {} ===", updateRequest);
-
-        Long userId = getUserIdFromToken(request);
-        UserProfileResponse updatedProfile = userProfileService.updateProfile(userId, updateRequest);
-
-        log.info("=== PROFILE UPDATED SUCCESSFULLY FOR USER: {} ===", userId);
-
-        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", updatedProfile));
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(
+            description = "Profile update request containing new information",
+            required = true
+        )
+        @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        var result = userProfileService.updateProfile(userDetails.getUserId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", result));
     }
 
-    /**
-     * Updates the current user's avatar.
-     *
-     * @param request HTTP request to extract JWT token
-     * @param avatarFile the avatar image file to upload
-     * @return ResponseEntity containing updated user profile information
-     */
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-        summary = "Update user avatar",
-        description = "Updates the current authenticated user's avatar image"
+        summary = "Upload user avatar",
+        description = """
+            Uploads a new avatar image for the currently authenticated user.
+            
+            **File Requirements:**
+            - Supported formats: JPEG, PNG, GIF
+            - Maximum size: 5MB
+            - Recommended dimensions: 200x200 pixels or larger
+            
+            **Behavior:**
+            - Replaces existing avatar if present
+            - Automatically deletes old avatar file
+            - Generates unique filename to prevent conflicts
+            """,
+        operationId = "uploadUserAvatar"
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
-            description = "Avatar updated successfully",
-            content = @Content(schema = @Schema(implementation = UserProfileResponse.class))
+            description = "Avatar uploaded successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ApiResponse.class),
+                examples = @ExampleObject(
+                    name = "Success Response",
+                    value = """
+                        {
+                          "success": true,
+                          "message": "Avatar uploaded successfully",
+                          "data": {
+                            "id": 1,
+                            "username": "john_doe123",
+                            "email": "john@example.com",
+                            "displayName": "John Doe",
+                            "avatarUrl": "/uploads/avatars/user_1_avatar_new.jpg",
+                            "createdAt": "2024-01-01T10:00:00"
+                          }
+                        }
+                        """
+                )
+            )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "Invalid file format or size"
+            description = "Invalid file - Wrong format, too large, or corrupted",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "File Validation Error",
+                    value = """
+                        {
+                          "success": false,
+                          "message": "File size exceeds maximum limit of 5MB",
+                          "data": null
+                        }
+                        """
+                )
+            )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Invalid or missing JWT token"
+            description = "Authentication required"
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "404",
-            description = "User not found"
+            responseCode = "500",
+            description = "File upload failed due to server error"
         )
     })
-    public ResponseEntity<ApiResponse<UserProfileResponse>> updateAvatar(
-            HttpServletRequest request,
-            @Parameter(description = "Avatar image file (JPEG, PNG, GIF, WebP)")
-            @RequestParam("avatar") MultipartFile avatarFile) {
-
-        // Check if file is provided
-        if (avatarFile == null || avatarFile.isEmpty()) {
-            log.warn("=== NO FILE PROVIDED FOR AVATAR UPDATE ===");
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Avatar file is required"));
-        }
-
-        log.info("=== UPDATE AVATAR REQUEST FOR FILE: {} ===", avatarFile.getOriginalFilename());
-
-        Long userId = getUserIdFromToken(request);
-        UserProfileResponse updatedProfile = userProfileService.updateAvatar(userId, avatarFile);
-
-        log.info("=== AVATAR UPDATED SUCCESSFULLY FOR USER: {} ===", userId);
-
-        return ResponseEntity.ok(ApiResponse.success("Avatar updated successfully", updatedProfile));
+    public ResponseEntity<ApiResponse<UserProfileResponse>> uploadAvatar(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(
+            description = "Avatar image file (JPEG, PNG, GIF, max 5MB)",
+            required = true,
+            content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
+        )
+        @RequestParam("avatar") MultipartFile avatarFile
+    ) {
+        log.info("upload avatar process");
+        var result = userProfileService.updateAvatar(userDetails.getUserId(), avatarFile);
+        return ResponseEntity.ok(ApiResponse.success("Avatar uploaded successfully", result));
     }
 
-    /**
-     * Updates both profile information and avatar in a single request.
-     *
-     * @param request HTTP request to extract JWT token
-     * @param username the new username
-     * @param displayName the new display name
-     * @param avatarFile the avatar image file to upload (optional)
-     * @return ResponseEntity containing updated user profile information
-     */
     @PutMapping(value = "/complete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-        summary = "Update profile with avatar",
-        description = "Updates both profile information and avatar in a single request"
+        summary = "Update profile and avatar together",
+        description = """
+            Updates both profile information and avatar in a single request.
+            This is useful for complete profile updates from user settings pages.
+            
+            **Features:**
+            - Atomic operation - either both succeed or both fail
+            - Optional avatar - can update profile without changing avatar
+            - Validates all data before making any changes
+            """,
+        operationId = "updateCompleteProfile"
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
-            description = "Profile and avatar updated successfully",
-            content = @Content(schema = @Schema(implementation = UserProfileResponse.class))
+            description = "Profile and avatar updated successfully"
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "Invalid request data, username already exists, or invalid file"
+            description = "Validation error in profile data or avatar file"
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Invalid or missing JWT token"
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "404",
-            description = "User not found"
+            description = "Authentication required"
         )
     })
-    public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfileComplete(
-            HttpServletRequest request,
-            @Parameter(description = "Username (3-20 characters, alphanumeric and underscore only)")
-            @RequestParam("username") String username,
-            @Parameter(description = "Display name (max 50 characters)")
-            @RequestParam(value = "displayName", required = false) String displayName,
-            @Parameter(description = "Avatar image file (JPEG, PNG, GIF, WebP)")
-            @RequestParam(value = "avatar", required = false) MultipartFile avatarFile) {
-
-        log.info("=== UPDATE COMPLETE PROFILE REQUEST: username={}, displayName={}, avatar={} ===",
-                username, displayName, avatarFile != null ? avatarFile.getOriginalFilename() : "none");
-
-        // Create update request from form parameters
-        UpdateProfileRequest updateRequest = new UpdateProfileRequest();
-        updateRequest.setUsername(username);
-        updateRequest.setDisplayName(displayName);
-
-        Long userId = getUserIdFromToken(request);
-        UserProfileResponse updatedProfile = userProfileService.updateProfileWithAvatar(userId, updateRequest, avatarFile);
-
-        log.info("=== COMPLETE PROFILE UPDATED SUCCESSFULLY FOR USER: {} ===", userId);
-
-        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", updatedProfile));
-    }
-
-    /**
-     * Extracts user ID from JWT token in the request.
-     *
-     * @param request the HTTP request containing JWT token
-     * @return the user ID from the token
-     */
-    private Long getUserIdFromToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            return jwtService.getUserIdFromToken(token);
-        }
-        throw new RuntimeException("No valid JWT token found");
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateCompleteProfile(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "Profile update request") @Valid UpdateProfileRequest request,
+        @Parameter(description = "Optional avatar file") @RequestParam(value = "avatar", required = false) MultipartFile avatarFile
+    ) {
+        var result = userProfileService.updateProfileWithAvatar(userDetails.getUserId(), request, avatarFile);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", result));
     }
 }
