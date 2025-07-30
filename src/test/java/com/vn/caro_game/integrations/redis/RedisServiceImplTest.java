@@ -1,5 +1,6 @@
 package com.vn.caro_game.integrations.redis;
 
+import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
 import com.vn.caro_game.entities.Friend;
 import com.vn.caro_game.entities.User;
 import com.vn.caro_game.repositories.FriendRepository;
@@ -178,13 +179,13 @@ class RedisServiceImplTest {
     }
 
     @Test
-    void getFriendsOnlineStatus_WithNoFriends_ShouldReturnEmptyMap() {
+    void getFriendsOnlineStatus_WithNoFriends_ShouldReturnEmptyList() {
         // Given
         Long userId = 1L;
         when(friendRepository.findAcceptedFriendshipsByUserId(userId)).thenReturn(new ArrayList<>());
 
         // When
-        Map<Long, Boolean> result = redisService.getFriendsOnlineStatus(userId);
+        List<FriendOnlineStatusResponse> result = redisService.getFriendsOnlineStatus(userId);
 
         // Then
         assertNotNull(result);
@@ -201,8 +202,8 @@ class RedisServiceImplTest {
         Long friendId2 = 3L;
         
         List<Friend> friendships = Arrays.asList(
-            createFriendship(userId, friendId1),
-            createFriendship(userId, friendId2)
+            createFriendship(userId, friendId1, "John Doe", "john.jpg"),
+            createFriendship(userId, friendId2, "Jane Smith", "jane.jpg")
         );
         
         when(friendRepository.findAcceptedFriendshipsByUserId(userId)).thenReturn(friendships);
@@ -210,13 +211,23 @@ class RedisServiceImplTest {
         when(redisTemplate.hasKey("online:3")).thenReturn(true);
 
         // When
-        Map<Long, Boolean> result = redisService.getFriendsOnlineStatus(userId);
+        List<FriendOnlineStatusResponse> result = redisService.getFriendsOnlineStatus(userId);
 
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertTrue(result.get(friendId1));
-        assertTrue(result.get(friendId2));
+
+        FriendOnlineStatusResponse friend1 = result.get(0);
+        assertEquals(friendId1, friend1.getUserId());
+        assertEquals("John Doe", friend1.getDisplayName());
+        assertEquals("john.jpg", friend1.getAvatarUrl());
+        assertTrue(friend1.getStatus());
+
+        FriendOnlineStatusResponse friend2 = result.get(1);
+        assertEquals(friendId2, friend2.getUserId());
+        assertEquals("Jane Smith", friend2.getDisplayName());
+        assertEquals("jane.jpg", friend2.getAvatarUrl());
+        assertTrue(friend2.getStatus());
     }
 
     @Test
@@ -227,8 +238,8 @@ class RedisServiceImplTest {
         Long friendId2 = 3L;
         
         List<Friend> friendships = Arrays.asList(
-            createFriendship(userId, friendId1),
-            createFriendship(userId, friendId2)
+            createFriendship(userId, friendId1, "John Doe", "john.jpg"),
+            createFriendship(userId, friendId2, "Jane Smith", "jane.jpg")
         );
         
         when(friendRepository.findAcceptedFriendshipsByUserId(userId)).thenReturn(friendships);
@@ -236,13 +247,19 @@ class RedisServiceImplTest {
         when(redisTemplate.hasKey("online:3")).thenReturn(false);
 
         // When
-        Map<Long, Boolean> result = redisService.getFriendsOnlineStatus(userId);
+        List<FriendOnlineStatusResponse> result = redisService.getFriendsOnlineStatus(userId);
 
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertFalse(result.get(friendId1));
-        assertFalse(result.get(friendId2));
+
+        FriendOnlineStatusResponse friend1 = result.get(0);
+        assertEquals(friendId1, friend1.getUserId());
+        assertFalse(friend1.getStatus());
+
+        FriendOnlineStatusResponse friend2 = result.get(1);
+        assertEquals(friendId2, friend2.getUserId());
+        assertFalse(friend2.getStatus());
     }
 
     @Test
@@ -254,9 +271,9 @@ class RedisServiceImplTest {
         Long friendId3 = 4L;
         
         List<Friend> friendships = Arrays.asList(
-            createFriendship(userId, friendId1),
-            createFriendship(userId, friendId2),
-            createFriendship(userId, friendId3)
+            createFriendship(userId, friendId1, "Alice Johnson", "alice.jpg"),
+            createFriendship(userId, friendId2, "Bob Smith", "bob.jpg"),
+            createFriendship(userId, friendId3, "Charlie Brown", "charlie.jpg")
         );
         
         when(friendRepository.findAcceptedFriendshipsByUserId(userId)).thenReturn(friendships);
@@ -265,14 +282,26 @@ class RedisServiceImplTest {
         when(redisTemplate.hasKey("online:4")).thenReturn(true);
 
         // When
-        Map<Long, Boolean> result = redisService.getFriendsOnlineStatus(userId);
+        List<FriendOnlineStatusResponse> result = redisService.getFriendsOnlineStatus(userId);
 
         // Then
         assertNotNull(result);
         assertEquals(3, result.size());
-        assertTrue(result.get(friendId1));
-        assertFalse(result.get(friendId2));
-        assertTrue(result.get(friendId3));
+
+        FriendOnlineStatusResponse friend1 = result.get(0);
+        assertEquals(friendId1, friend1.getUserId());
+        assertEquals("Alice Johnson", friend1.getDisplayName());
+        assertTrue(friend1.getStatus());
+
+        FriendOnlineStatusResponse friend2 = result.get(1);
+        assertEquals(friendId2, friend2.getUserId());
+        assertEquals("Bob Smith", friend2.getDisplayName());
+        assertFalse(friend2.getStatus());
+
+        FriendOnlineStatusResponse friend3 = result.get(2);
+        assertEquals(friendId3, friend3.getUserId());
+        assertEquals("Charlie Brown", friend3.getDisplayName());
+        assertTrue(friend3.getStatus());
     }
 
     @Test
@@ -281,23 +310,29 @@ class RedisServiceImplTest {
         Long userId = 1L;
         Long friendId1 = 2L;
         
-        Friend friendship = createReverseFriendship(friendId1, userId);
+        Friend friendship = createReverseFriendship(friendId1, userId, "Diana Prince", "diana.jpg");
         List<Friend> friendships = Arrays.asList(friendship);
         
         when(friendRepository.findAcceptedFriendshipsByUserId(userId)).thenReturn(friendships);
         when(redisTemplate.hasKey("online:2")).thenReturn(true);
 
         // When
-        Map<Long, Boolean> result = redisService.getFriendsOnlineStatus(userId);
+        List<FriendOnlineStatusResponse> result = redisService.getFriendsOnlineStatus(userId);
 
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertTrue(result.get(friendId1));
+
+        FriendOnlineStatusResponse friend = result.get(0);
+        assertEquals(friendId1, friend.getUserId());
+        assertEquals("Diana Prince", friend.getDisplayName());
+        assertEquals("diana.jpg", friend.getAvatarUrl());
+        assertTrue(friend.getStatus());
+
         verify(redisTemplate).hasKey("online:2");
     }
 
-    private Friend createFriendship(Long userId, Long friendId) {
+    private Friend createFriendship(Long userId, Long friendId, String displayName, String avatarUrl) {
         Friend friendship = new Friend();
         Friend.FriendId id = new Friend.FriendId(userId, friendId);
         friendship.setId(id);
@@ -308,18 +343,22 @@ class RedisServiceImplTest {
         
         User friend = new User();
         friend.setId(friendId);
+        friend.setDisplayName(displayName);
+        friend.setAvatarUrl(avatarUrl);
         friendship.setFriend(friend);
         
         return friendship;
     }
 
-    private Friend createReverseFriendship(Long userId, Long friendId) {
+    private Friend createReverseFriendship(Long userId, Long friendId, String displayName, String avatarUrl) {
         Friend friendship = new Friend();
         Friend.FriendId id = new Friend.FriendId(userId, friendId);
         friendship.setId(id);
         
         User user = new User();
         user.setId(userId);
+        user.setDisplayName(displayName);
+        user.setAvatarUrl(avatarUrl);
         friendship.setUser(user);
         
         User friend = new User();

@@ -33,25 +33,6 @@ class DevWebSocketControllerTest {
     private DevWebSocketController devWebSocketController;
 
     @Test
-    void testEndpoint_ShouldReturnSuccessMessage() {
-        // When
-        String result = devWebSocketController.testEndpoint();
-
-        // Then
-        assertEquals("DevWebSocketController is working!", result);
-    }
-
-    @Test
-    void testSendPong_ShouldSendMessageAndReturnConfirmation() {
-        // When
-        String result = devWebSocketController.testSendPong();
-
-        // Then
-        verify(messagingTemplate).convertAndSend("/topic/pong", "Test pong from server!");
-        assertEquals("Pong message sent to /topic/pong", result);
-    }
-
-    @Test
     void handlePing_ShouldReturnPongMessage() {
         // Given
         String pingMessage = "Hello Server!";

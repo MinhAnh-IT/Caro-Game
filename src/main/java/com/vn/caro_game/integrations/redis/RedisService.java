@@ -1,5 +1,7 @@
 package com.vn.caro_game.integrations.redis;
 
+import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
+
 import java.util.List;
 import java.util.Map;
 
@@ -69,14 +71,17 @@ public interface RedisService {
     Map<Long, Boolean> getUsersOnlineStatus(List<Long> userIds);
     
     /**
-     * Gets online status for all friends of a specific user.
-     * This method retrieves the user's friend list and checks their online status.
-     * 
+     * Retrieves the online status of all accepted friends for a given user.
+     *
+     * <p>This method fetches all accepted friendships for the specified user and
+     * checks their online status using Redis. It returns comprehensive friend
+     * information including display name, avatar, and online status.</p>
+     *
      * @param userId the user ID whose friends' online status to check
-     * @return map of friend ID to online status (only includes accepted friends)
+     * @return list of friend online status information (only includes accepted friends)
      */
-    Map<Long, Boolean> getFriendsOnlineStatus(Long userId);
-    
+    List<FriendOnlineStatusResponse> getFriendsOnlineStatus(Long userId);
+
     /**
      * Subscribes to a Redis channel.
      * 

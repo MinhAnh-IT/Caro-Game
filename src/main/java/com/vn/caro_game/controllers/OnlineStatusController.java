@@ -1,9 +1,8 @@
 package com.vn.caro_game.controllers;
 
+import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.dtos.response.ApiResponse;
-import com.vn.caro_game.entities.User;
-import com.vn.caro_game.enums.StatusCode;
-import com.vn.caro_game.exceptions.CustomException;
+import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
 import com.vn.caro_game.integrations.redis.RedisService;
 import com.vn.caro_game.repositories.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,12 +12,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * REST Controller for managing user online status.
@@ -36,6 +35,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/online-status")
+@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 @Tag(name = "Online Status", description = "APIs for managing and checking user online status")
 public class OnlineStatusController {
@@ -45,10 +45,10 @@ public class OnlineStatusController {
     @Operation(
         summary = "Get Online Status of Current User's Friends",
         description = """
-            Retrieves the online status of all friends for the current authenticated user.
+            Retrieves the detailed information and online status of all friends for the current authenticated user.
             
             **Features:**
-            - Returns online status (true/false) for all accepted friends
+            - Returns comprehensive friend information including userId, displayName, avatarUrl, and online status
             - Uses Redis TTL-based online tracking
             - Efficient batch checking of multiple users
             - Only includes friends with 'ACCEPTED' status
@@ -64,11 +64,20 @@ public class OnlineStatusController {
               "success": true,
               "statusCode": 200,
               "message": "Friends online status retrieved successfully",
-              "data": {
-                "123": true,   // Friend ID 123 is online
-                "456": false,  // Friend ID 456 is offline
-                "789": true    // Friend ID 789 is online
-              }
+              "data": [
+                {
+                  "userId": 123,
+                  "displayName": "John Doe",
+                  "avatarUrl": "https://example.com/avatar1.jpg",
+                  "status": true
+                },
+                {
+                  "userId": 456,
+                  "displayName": "Jane Smith",
+                  "avatarUrl": "https://example.com/avatar2.jpg",
+                  "status": false
+                }
+              ]
             }
             ```
             """,
@@ -95,20 +104,14 @@ public class OnlineStatusController {
         }
     )
     @GetMapping("/friends")
-    public ResponseEntity<ApiResponse<Map<Long, Boolean>>> getFriendsOnlineStatus() {
-        // Get current authenticated user's email
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        
-        // Get user from email
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new CustomException(StatusCode.USER_NOT_FOUND));
-        
-        // Get friends online status
-        Map<Long, Boolean> friendsStatus = redisService.getFriendsOnlineStatus(user.getId());
-        
-        ApiResponse<Map<Long, Boolean>> response = ApiResponse.success(
-            "Friends online status retrieved successfully", 
-            friendsStatus
+    public ResponseEntity<ApiResponse<List<FriendOnlineStatusResponse>>> getFriendsOnlineStatus(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+            ) {
+        // Get friends online status with detailed information
+        List<FriendOnlineStatusResponse> friendsList = redisService.getFriendsOnlineStatus(customUserDetails.getUserId());
+
+        ApiResponse<List<FriendOnlineStatusResponse>> response = ApiResponse.success(
+            "Friends online status retrieved successfully", friendsList
         );
         
         return ResponseEntity.ok(response);

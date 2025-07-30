@@ -1,6 +1,8 @@
 package com.vn.caro_game.integrations.redis;
 
+import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
 import com.vn.caro_game.entities.Friend;
+import com.vn.caro_game.entities.User;
 import com.vn.caro_game.repositories.FriendRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,33 +140,44 @@ public class RedisServiceImpl implements RedisService {
     }
 
     /**
-     * Gets online status for all friends of a specific user.
-     * 
+     * Retrieves the online status of all accepted friends for a given user.
+     *
      * <p>Retrieves all accepted friends of the specified user and checks their online status.
      * This method combines database queries to get friend relationships with Redis operations
-     * to check online status efficiently.</p>
-     * 
+     * to check online status efficiently. Returns comprehensive friend information including
+     * display name, avatar, and online status.</p>
+     *
      * @param userId the user ID whose friends' online status to check
-     * @return map of friend ID to online status (only includes accepted friends)
+     * @return list of friend online status information (only includes accepted friends)
      */
     @Override
-    public Map<Long, Boolean> getFriendsOnlineStatus(Long userId) {
+    public List<FriendOnlineStatusResponse> getFriendsOnlineStatus(Long userId) {
         // Get all accepted friends for the user
         List<Friend> friendships = friendRepository.findAcceptedFriendshipsByUserId(userId);
         
-        Map<Long, Boolean> statusMap = new HashMap<>();
-        
+        List<FriendOnlineStatusResponse> friendsList = new ArrayList<>();
+
         for (Friend friendship : friendships) {
             // Determine which user is the friend (not the requesting user)
-            Long friendId = friendship.getUser().getId().equals(userId) 
-                ? friendship.getFriend().getId() 
-                : friendship.getUser().getId();
-            
+            User friendUser = friendship.getUser().getId().equals(userId)
+                ? friendship.getFriend()
+                : friendship.getUser();
+
             // Check online status for this friend
-            statusMap.put(friendId, isUserOnline(friendId));
+            boolean isOnline = isUserOnline(friendUser.getId());
+
+            // Create response DTO with friend details
+            FriendOnlineStatusResponse friendResponse = new FriendOnlineStatusResponse(
+                friendUser.getId(),
+                friendUser.getDisplayName(),
+                friendUser.getAvatarUrl(),
+                isOnline
+            );
+
+            friendsList.add(friendResponse);
         }
         
-        return statusMap;
+        return friendsList;
     }
 
     /**

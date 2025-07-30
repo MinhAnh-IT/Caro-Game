@@ -54,37 +54,6 @@ public class DevWebSocketController {
     private static final long ONLINE_TTL = 300;
 
     /**
-     * Health check endpoint for WebSocket testing.
-     * 
-     * @return success message
-     */
-    @GetMapping("/api/test/websocket")
-    @ResponseBody
-    @Operation(summary = "WebSocket health check", description = "Test endpoint to verify WebSocket controller is active")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Controller is working")
-    })
-    public String testEndpoint() {
-        return "DevWebSocketController is working!";
-    }
-
-    /**
-     * Test endpoint to send a message to WebSocket topic.
-     * 
-     * @return confirmation message
-     */
-    @GetMapping("/api/test/send-pong")
-    @ResponseBody
-    @Operation(summary = "Send test message", description = "Send a test message to WebSocket topic")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Message sent successfully")
-    })
-    public String testSendPong() {
-        messagingTemplate.convertAndSend("/topic/pong", "Test pong from server!");
-        return "Pong message sent to /topic/pong";
-    }
-
-    /**
      * Handles WebSocket ping messages and responds with pong.
      * 
      * <p>This STOMP endpoint receives messages sent to "/app/ping" and

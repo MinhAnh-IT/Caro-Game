@@ -1,11 +1,10 @@
 package com.vn.caro_game.controllers;
 
+import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.dtos.response.ApiResponse;
+import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
 import com.vn.caro_game.entities.User;
-import com.vn.caro_game.exceptions.CustomException;
 import com.vn.caro_game.integrations.redis.RedisService;
-import com.vn.caro_game.repositories.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,13 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,127 +33,81 @@ class OnlineStatusControllerTest {
     private RedisService redisService;
     
     @Mock
-    private UserRepository userRepository;
-    
-    @Mock
-    private SecurityContext securityContext;
-    
-    @Mock
-    private Authentication authentication;
+    private CustomUserDetails customUserDetails;
 
     @InjectMocks
     private OnlineStatusController onlineStatusController;
-    
-    @BeforeEach
-    void setUp() {
-        SecurityContextHolder.setContext(securityContext);
-    }
 
     @Test
-    void getFriendsOnlineStatus_WithValidUser_ShouldReturnFriendsStatusMap() {
+    void getFriendsOnlineStatus_WithValidUser_ShouldReturnFriendsStatusList() {
         // Given
-        String userEmail = "test@example.com";
         Long userId = 1L;
-        User user = new User();
-        user.setId(userId);
-        user.setEmail(userEmail);
-        
-        Map<Long, Boolean> expectedFriendsStatus = new HashMap<>();
-        expectedFriendsStatus.put(2L, true);   // Friend 2 is online
-        expectedFriendsStatus.put(3L, false);  // Friend 3 is offline
-        expectedFriendsStatus.put(4L, true);   // Friend 4 is online
-        
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(userEmail);
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(expectedFriendsStatus);
+
+        List<FriendOnlineStatusResponse> expectedFriendsList = new ArrayList<>();
+        expectedFriendsList.add(new FriendOnlineStatusResponse(2L, "John Doe", "avatar1.jpg", true));
+        expectedFriendsList.add(new FriendOnlineStatusResponse(3L, "Jane Smith", "avatar2.jpg", false));
+        expectedFriendsList.add(new FriendOnlineStatusResponse(4L, "Bob Wilson", "avatar3.jpg", true));
+
+        when(customUserDetails.getUserId()).thenReturn(userId);
+        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(expectedFriendsList);
 
         // When
-        ResponseEntity<ApiResponse<Map<Long, Boolean>>> response = onlineStatusController.getFriendsOnlineStatus();
+        ResponseEntity<ApiResponse<List<FriendOnlineStatusResponse>>> response =
+            onlineStatusController.getFriendsOnlineStatus(customUserDetails);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Friends online status retrieved successfully", response.getBody().getMessage());
-        assertEquals(expectedFriendsStatus, response.getBody().getData());
-        
-        verify(userRepository).findByEmail(userEmail);
+        assertEquals(expectedFriendsList, response.getBody().getData());
+
+        verify(customUserDetails).getUserId();
         verify(redisService).getFriendsOnlineStatus(userId);
     }
 
     @Test
-    void getFriendsOnlineStatus_WithEmptyFriendsList_ShouldReturnEmptyMap() {
+    void getFriendsOnlineStatus_WithEmptyFriendsList_ShouldReturnEmptyList() {
         // Given
-        String userEmail = "test@example.com";
         Long userId = 1L;
-        User user = new User();
-        user.setId(userId);
-        user.setEmail(userEmail);
-        
-        Map<Long, Boolean> emptyFriendsStatus = new HashMap<>();
-        
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(userEmail);
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(emptyFriendsStatus);
+
+        List<FriendOnlineStatusResponse> emptyFriendsList = new ArrayList<>();
+
+        when(customUserDetails.getUserId()).thenReturn(userId);
+        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(emptyFriendsList);
 
         // When
-        ResponseEntity<ApiResponse<Map<Long, Boolean>>> response = onlineStatusController.getFriendsOnlineStatus();
+        ResponseEntity<ApiResponse<List<FriendOnlineStatusResponse>>> response =
+            onlineStatusController.getFriendsOnlineStatus(customUserDetails);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().isSuccess());
         assertEquals("Friends online status retrieved successfully", response.getBody().getMessage());
-        assertNotNull(response.getBody().getData());
         assertTrue(response.getBody().getData().isEmpty());
         
-        verify(userRepository).findByEmail(userEmail);
+        verify(customUserDetails).getUserId();
         verify(redisService).getFriendsOnlineStatus(userId);
-    }
-
-    @Test
-    void getFriendsOnlineStatus_WithUserNotFound_ShouldThrowCustomException() {
-        // Given
-        String userEmail = "nonexistent@example.com";
-        
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(userEmail);
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThrows(CustomException.class, () -> {
-            onlineStatusController.getFriendsOnlineStatus();
-        });
-        
-        verify(userRepository).findByEmail(userEmail);
-        verify(redisService, never()).getFriendsOnlineStatus(anyLong());
     }
 
     @Test
     void getFriendsOnlineStatus_WithMixedOnlineStatus_ShouldReturnCorrectStatuses() {
         // Given
-        String userEmail = "test@example.com";
         Long userId = 1L;
-        User user = new User();
-        user.setId(userId);
-        user.setEmail(userEmail);
-        
-        Map<Long, Boolean> mixedFriendsStatus = new HashMap<>();
-        mixedFriendsStatus.put(2L, true);    // Friend 2 is online
-        mixedFriendsStatus.put(3L, false);   // Friend 3 is offline
-        mixedFriendsStatus.put(4L, true);    // Friend 4 is online
-        mixedFriendsStatus.put(5L, false);   // Friend 5 is offline
-        mixedFriendsStatus.put(6L, false);   // Friend 6 is offline
-        
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(userEmail);
-        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(mixedFriendsStatus);
+
+        List<FriendOnlineStatusResponse> mixedFriendsList = new ArrayList<>();
+        mixedFriendsList.add(new FriendOnlineStatusResponse(2L, "Alice Johnson", "alice.jpg", true));
+        mixedFriendsList.add(new FriendOnlineStatusResponse(3L, "Bob Smith", "bob.jpg", false));
+        mixedFriendsList.add(new FriendOnlineStatusResponse(4L, "Charlie Brown", "charlie.jpg", true));
+        mixedFriendsList.add(new FriendOnlineStatusResponse(5L, "Diana Prince", "diana.jpg", false));
+
+        when(customUserDetails.getUserId()).thenReturn(userId);
+        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(mixedFriendsList);
 
         // When
-        ResponseEntity<ApiResponse<Map<Long, Boolean>>> response = onlineStatusController.getFriendsOnlineStatus();
+        ResponseEntity<ApiResponse<List<FriendOnlineStatusResponse>>> response =
+            onlineStatusController.getFriendsOnlineStatus(customUserDetails);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -166,18 +115,53 @@ class OnlineStatusControllerTest {
         assertTrue(response.getBody().isSuccess());
         assertEquals("Friends online status retrieved successfully", response.getBody().getMessage());
         
-        Map<Long, Boolean> responseData = response.getBody().getData();
-        assertNotNull(responseData);
-        assertEquals(5, responseData.size());
-        
-        // Check specific statuses
-        assertTrue(responseData.get(2L));   // Friend 2 is online
-        assertFalse(responseData.get(3L));  // Friend 3 is offline
-        assertTrue(responseData.get(4L));   // Friend 4 is online
-        assertFalse(responseData.get(5L));  // Friend 5 is offline
-        assertFalse(responseData.get(6L));  // Friend 6 is offline
-        
-        verify(userRepository).findByEmail(userEmail);
+        List<FriendOnlineStatusResponse> responseData = response.getBody().getData();
+        assertEquals(4, responseData.size());
+
+        // Verify specific friend statuses
+        assertEquals(2L, responseData.get(0).getUserId());
+        assertEquals("Alice Johnson", responseData.get(0).getDisplayName());
+        assertTrue(responseData.get(0).getStatus());
+
+        assertEquals(3L, responseData.get(1).getUserId());
+        assertEquals("Bob Smith", responseData.get(1).getDisplayName());
+        assertFalse(responseData.get(1).getStatus());
+
+        verify(customUserDetails).getUserId();
+        verify(redisService).getFriendsOnlineStatus(userId);
+    }
+
+    @Test
+    void getFriendsOnlineStatus_WithLargeNumberOfFriends_ShouldHandleCorrectly() {
+        // Given
+        Long userId = 1L;
+
+        List<FriendOnlineStatusResponse> largeFriendsList = new ArrayList<>();
+        for (int i = 2; i <= 20; i++) {
+            boolean isOnline = i % 2 == 0; // Every even friend is online
+            largeFriendsList.add(new FriendOnlineStatusResponse(
+                (long) i,
+                "Friend " + i,
+                "avatar" + i + ".jpg",
+                isOnline
+            ));
+        }
+
+        when(customUserDetails.getUserId()).thenReturn(userId);
+        when(redisService.getFriendsOnlineStatus(userId)).thenReturn(largeFriendsList);
+
+        // When
+        ResponseEntity<ApiResponse<List<FriendOnlineStatusResponse>>> response =
+            onlineStatusController.getFriendsOnlineStatus(customUserDetails);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().isSuccess());
+        assertEquals("Friends online status retrieved successfully", response.getBody().getMessage());
+        assertEquals(19, response.getBody().getData().size()); // 19 friends (2-20)
+
+        verify(customUserDetails).getUserId();
         verify(redisService).getFriendsOnlineStatus(userId);
     }
 }
