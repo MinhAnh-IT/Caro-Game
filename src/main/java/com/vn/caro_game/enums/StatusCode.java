@@ -34,9 +34,11 @@ public enum StatusCode {
     ERROR_CONVERT_IMAGE(5001, "Error converting image"),
     ERROR_SAVE_FILE(5002, "Error while saving file"),
     FILE_UPLOAD_ERROR(5003, "File upload failed"),
+    FILE_TOO_LARGE(5004, "File size exceeds maximum limit"),
+    INVALID_FILE_TYPE(5005, "Invalid file type"),
 
     // Email errors
-    EMAIL_SEND_FAILED(5004, "Failed to send email");
+    EMAIL_SEND_FAILED(5006, "Failed to send email");
 
     int code;
     String message;

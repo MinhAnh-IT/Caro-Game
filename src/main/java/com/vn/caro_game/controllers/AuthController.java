@@ -155,6 +155,7 @@ public class AuthController extends BaseController implements AuthControllerInte
                             {
                                 "username": "john_doe",
                                 "email": "john@example.com",
+                                "displayName": "John Doe",
                                 "password": "SecurePassword123"
                             }
                             """
@@ -163,11 +164,8 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @Valid @RequestBody UserCreation userCreation) {
         
-        log.info("Registration attempt for username: {}", userCreation.getUsername());
-        
         UserResponse userResponse = authService.register(userCreation);
         
-        log.info("User registered successfully: {}", userResponse.getUsername());
         return created(userResponse, "User registered successfully");
     }
     
@@ -285,11 +283,8 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @Valid @RequestBody LoginRequest loginRequest) {
         
-        log.info("Login attempt for username: {}", loginRequest.getUsername());
-        
         AuthResponse authResponse = authService.login(loginRequest);
         
-        log.info("User authenticated successfully: {}", loginRequest.getUsername());
         return success(authResponse, "Login successful");
     }
     
@@ -394,11 +389,8 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         
-        log.info("Password reset request for email: {}", forgotPasswordRequest.getEmail());
-        
         authService.forgotPassword(forgotPasswordRequest);
         
-        log.info("Password reset OTP sent to: {}", forgotPasswordRequest.getEmail());
         return success("Password reset OTP sent to your email");
     }
 
@@ -483,11 +475,8 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         
-        log.info("Password reset attempt for email: {}", resetPasswordRequest.getEmail());
-        
         authService.resetPassword(resetPasswordRequest);
         
-        log.info("Password reset completed for: {}", resetPasswordRequest.getEmail());
         return success("Password reset successfully");
     }
 
@@ -557,11 +546,9 @@ public class AuthController extends BaseController implements AuthControllerInte
     public ResponseEntity<ApiResponse<Void>> requestChangePasswordOtp() {
         
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.info("Change password OTP request from authenticated user: {}", email);
-        
+
         authService.requestChangePasswordOtp(email);
         
-        log.info("Change password OTP sent to: {}", email);
         return accepted("Change password OTP sent to your email");
     }
 
@@ -648,11 +635,9 @@ public class AuthController extends BaseController implements AuthControllerInte
             @Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.info("Password change request from authenticated user: {}", email);
-        
+
         authService.changePassword(changePasswordRequest, email);
         
-        log.info("Password changed successfully for user: {}", email);
         return success("Password changed successfully");
     }
 
@@ -764,11 +749,8 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
         
-        log.info("Token refresh request initiated");
-        
         AuthResponse authResponse = authService.refreshToken(refreshTokenRequest);
         
-        log.info("Token refreshed successfully for user");
         return success(authResponse, "Token refreshed successfully");
     }
 
@@ -840,14 +822,10 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @RequestHeader("Authorization") String accessToken) {
         
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        log.info("Logout request from user: {}", email);
-        
         // Extract token from "Bearer " prefix
         String token = accessToken.startsWith("Bearer ") ? accessToken.substring(7) : accessToken;
         authService.logout(token);
         
-        log.info("User logged out successfully: {}", email);
         return success("Logout successful");
     }
 }

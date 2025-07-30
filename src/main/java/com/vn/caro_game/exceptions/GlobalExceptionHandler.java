@@ -33,6 +33,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(httpStatus).body(response);
     }
     
+    @ExceptionHandler(FileUploadException.class)
+    public ResponseEntity<ApiResponse<Object>> handleFileUploadException(FileUploadException ex) {
+        log.error("File upload exception occurred: {}", ex.getMessage(), ex);
+
+        ApiResponse<Object> response = ApiResponse.error(
+            ex.getMessage(),
+            "FILE_UPLOAD_ERROR",
+            HttpStatusConstants.BAD_REQUEST
+        );
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
         log.error("Validation exception occurred", ex);
@@ -71,7 +84,8 @@ public class GlobalExceptionHandler {
     private HttpStatus mapStatusCodeToHttpStatus(StatusCode statusCode) {
         return switch (statusCode) {
             case BAD_REQUEST, EMAIL_ALREADY_EXISTS, USERNAME_ALREADY_EXISTS,
-                 CURRENT_PASSWORD_INCORRECT, INVALID_OTP -> HttpStatus.BAD_REQUEST;
+                 CURRENT_PASSWORD_INCORRECT, INVALID_OTP, INVALID_REQUEST,
+                 FILE_TOO_LARGE, INVALID_FILE_TYPE -> HttpStatus.BAD_REQUEST;
             case UNAUTHORIZED, INVALID_CREDENTIALS, INVALID_REFRESH_TOKEN -> HttpStatus.UNAUTHORIZED;
             case FORBIDDEN, ACCOUNT_LOCKED -> HttpStatus.FORBIDDEN;
             case NOT_FOUND, USER_NOT_FOUND, EMAIL_NOT_FOUND -> HttpStatus.NOT_FOUND;
@@ -83,7 +97,8 @@ public class GlobalExceptionHandler {
     private int mapStatusCodeToInt(StatusCode statusCode) {
         return switch (statusCode) {
             case BAD_REQUEST, EMAIL_ALREADY_EXISTS, USERNAME_ALREADY_EXISTS,
-                 CURRENT_PASSWORD_INCORRECT, INVALID_OTP -> HttpStatusConstants.BAD_REQUEST;
+                 CURRENT_PASSWORD_INCORRECT, INVALID_OTP, INVALID_REQUEST,
+                 FILE_TOO_LARGE, INVALID_FILE_TYPE -> HttpStatusConstants.BAD_REQUEST;
             case UNAUTHORIZED, INVALID_CREDENTIALS, INVALID_REFRESH_TOKEN -> HttpStatusConstants.UNAUTHORIZED;
             case FORBIDDEN, ACCOUNT_LOCKED -> HttpStatusConstants.FORBIDDEN;
             case NOT_FOUND, USER_NOT_FOUND, EMAIL_NOT_FOUND -> HttpStatusConstants.NOT_FOUND;

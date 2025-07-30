@@ -46,14 +46,12 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         try {
             // Lấy token từ query string
             String uri = request.getURI().toString();
-            System.out.println("WebSocket connection attempt to: " + uri);
-            
+
             String token = null;
             if (uri.contains("token=")) {
                 String[] parts = uri.split("token=");
                 if (parts.length > 1) {
                     token = parts[1];
-                    // Nếu có dấu & phía sau token thì cắt bỏ
                     int amp = token.indexOf('&');
                     if (amp != -1) token = token.substring(0, amp);
                     
@@ -64,12 +62,10 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                         token = token.substring(7);
                     }
                     attributes.put("jwt", token);
-                    System.out.println("Token extracted: " + token.substring(0, Math.min(20, token.length())) + "...");
                 }
             }
             return true;
         } catch (Exception e) {
-            System.err.println("Error in WebSocket handshake: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
