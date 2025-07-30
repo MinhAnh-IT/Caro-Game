@@ -155,6 +155,7 @@ public class AuthController extends BaseController implements AuthControllerInte
                             {
                                 "username": "john_doe",
                                 "email": "john@example.com",
+                                "displayName": "John Doe",
                                 "password": "SecurePassword123"
                             }
                             """
