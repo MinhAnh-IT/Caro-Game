@@ -7,7 +7,7 @@ import com.vn.caro_game.dtos.response.UserProfileResponse;
 import com.vn.caro_game.entities.User;
 import com.vn.caro_game.enums.StatusCode;
 import com.vn.caro_game.exceptions.CustomException;
-import com.vn.caro_game.services.UserProfileService;
+import com.vn.caro_game.services.interfaces.IUserProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -55,7 +55,7 @@ class UserProfileControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private UserProfileService userProfileService;
+    private IUserProfileService userProfileService;
 
     private User testUser;
     private CustomUserDetails testUserDetails;

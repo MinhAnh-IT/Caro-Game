@@ -3,7 +3,6 @@ package com.vn.caro_game.controllers;
 import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
-import com.vn.caro_game.entities.User;
 import com.vn.caro_game.integrations.redis.RedisService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -27,21 +27,45 @@ import java.time.LocalDateTime;
 @Schema(description = "User profile information response")
 public class UserProfileResponse {
 
-    @Schema(description = "User ID", example = "1")
+    @Schema(
+        description = "Unique identifier for the user account",
+        example = "1",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     Long id;
 
-    @Schema(description = "Username", example = "john_doe123")
+    @Schema(
+        description = "Unique username for login and identification",
+        example = "john_doe123",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     String username;
 
-    @Schema(description = "Email address", example = "john@example.com")
+    @Schema(
+        description = "User's email address for communication and login",
+        example = "john@example.com",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     String email;
 
-    @Schema(description = "Display name", example = "John Doe")
+    @Schema(
+        description = "Display name shown to other users in the application",
+        example = "John Doe",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
     String displayName;
 
-    @Schema(description = "Avatar URL", example = "/uploads/avatars/user_1_avatar.jpg")
+    @Schema(
+        description = "URL path to user's avatar image. Null if no avatar uploaded.",
+        example = "/uploads/avatars/user_1_avatar.jpg",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
     String avatarUrl;
 
-    @Schema(description = "Account creation timestamp", example = "2024-01-01T10:00:00")
+    @Schema(
+        description = "Timestamp when the user account was created",
+        example = "2024-01-01T10:00:00",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     LocalDateTime createdAt;
 }

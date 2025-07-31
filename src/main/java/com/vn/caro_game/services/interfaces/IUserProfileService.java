@@ -1,6 +1,6 @@
 package com.vn.caro_game.services.interfaces;
 
-import com.vn.caro_game.dtos.request.UserProfileUpdateRequest;
+import com.vn.caro_game.dtos.request.UpdateProfileRequest;
 import com.vn.caro_game.dtos.response.UserProfileResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +26,7 @@ public interface IUserProfileService {
      *
      * @param userId the ID of the user whose profile to retrieve
      * @return UserProfileResponse containing user profile data
-     * @throws com.vn.caro_game.exceptions.ResourceNotFoundException if user not found
+     * @throws com.vn.caro_game.exceptions.CustomException if user not found
      */
     UserProfileResponse getUserProfile(Long userId);
 
@@ -36,10 +36,9 @@ public interface IUserProfileService {
      * @param userId the ID of the user whose profile to update
      * @param request the profile update request containing new information
      * @return UserProfileResponse containing updated profile data
-     * @throws com.vn.caro_game.exceptions.ResourceNotFoundException if user not found
-     * @throws com.vn.caro_game.exceptions.ValidationException if request data is invalid
+     * @throws com.vn.caro_game.exceptions.CustomException if user not found or validation fails
      */
-    UserProfileResponse updateUserProfile(Long userId, UserProfileUpdateRequest request);
+    UserProfileResponse updateProfile(Long userId, UpdateProfileRequest request);
 
     /**
      * Uploads and updates user avatar.
@@ -47,18 +46,18 @@ public interface IUserProfileService {
      * @param userId the ID of the user whose avatar to update
      * @param avatarFile the avatar image file to upload
      * @return UserProfileResponse containing updated profile data with new avatar URL
-     * @throws com.vn.caro_game.exceptions.ResourceNotFoundException if user not found
-     * @throws com.vn.caro_game.exceptions.FileUploadException if file upload fails
-     * @throws com.vn.caro_game.exceptions.ValidationException if file is invalid
+     * @throws com.vn.caro_game.exceptions.CustomException if user not found or file upload fails
      */
-    UserProfileResponse updateUserAvatar(Long userId, MultipartFile avatarFile);
+    UserProfileResponse updateAvatar(Long userId, MultipartFile avatarFile);
 
     /**
-     * Deletes user avatar and sets avatar URL to null.
+     * Updates both profile information and avatar in a single operation.
      *
-     * @param userId the ID of the user whose avatar to delete
-     * @return UserProfileResponse containing updated profile data without avatar
-     * @throws com.vn.caro_game.exceptions.ResourceNotFoundException if user not found
+     * @param userId the ID of the user whose profile to update
+     * @param request the profile update request containing new information
+     * @param avatarFile the optional avatar image file to upload
+     * @return UserProfileResponse containing updated profile data
+     * @throws com.vn.caro_game.exceptions.CustomException if user not found, validation fails, or file upload fails
      */
-    UserProfileResponse deleteUserAvatar(Long userId);
+    UserProfileResponse updateProfileWithAvatar(Long userId, UpdateProfileRequest request, MultipartFile avatarFile);
 }

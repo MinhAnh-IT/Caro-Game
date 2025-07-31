@@ -38,7 +38,14 @@ public enum StatusCode {
     INVALID_FILE_TYPE(5005, "Invalid file type"),
 
     // Email errors
-    EMAIL_SEND_FAILED(5006, "Failed to send email");
+    EMAIL_SEND_FAILED(5006, "Failed to send email"),
+
+    // Friend management errors
+    FRIEND_REQUEST_ALREADY_SENT(4012, "Friend request already sent"),
+    FRIEND_REQUEST_NOT_FOUND(4013, "Friend request not found"),
+    CANNOT_ADD_YOURSELF(4014, "Cannot add yourself as friend"),
+    ALREADY_FRIENDS(4015, "Already friends with this user"),
+    FRIEND_REQUEST_ALREADY_RESPONDED(4016, "Friend request already responded");
 
     int code;
     String message;

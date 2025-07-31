@@ -4,13 +4,15 @@ import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
 import com.vn.caro_game.integrations.redis.RedisService;
-import com.vn.caro_game.repositories.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,10 +39,10 @@ import java.util.List;
 @RequestMapping("/api/online-status")
 @SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Online Status", description = "APIs for managing and checking user online status")
 public class OnlineStatusController {
-    private final RedisService redisService;
-    private final UserRepository userRepository;
+    RedisService redisService;
 
     @Operation(
         summary = "Get Online Status of Current User's Friends",
