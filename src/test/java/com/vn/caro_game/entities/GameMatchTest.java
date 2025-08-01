@@ -116,7 +116,10 @@ class GameMatchTest {
             GameResult.ONGOING,
             GameResult.X_WIN,
             GameResult.O_WIN,
-            GameResult.DRAW
+            GameResult.DRAW,
+            GameResult.WIN,
+            GameResult.LOSE,
+            GameResult.NONE
         );
     }
 

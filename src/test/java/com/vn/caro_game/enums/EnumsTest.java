@@ -87,12 +87,15 @@ class EnumsTest {
     void testGameResultEnum() {
         GameResult[] values = GameResult.values();
         
-        assertThat(values).hasSize(4);
+        assertThat(values).hasSize(7);
         assertThat(values).containsExactly(
             GameResult.X_WIN,
             GameResult.O_WIN,
             GameResult.DRAW,
-            GameResult.ONGOING
+            GameResult.ONGOING,
+            GameResult.WIN,
+            GameResult.LOSE,
+            GameResult.NONE
         );
     }
 }

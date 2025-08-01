@@ -60,6 +60,43 @@ class FriendControllerTest {
     @MockBean
     private FriendRepository friendRepository;
 
+    // Additional MockBeans needed for GameRoomService dependencies
+    @MockBean
+    private com.vn.caro_game.repositories.GameRoomRepository gameRoomRepository;
+
+    @MockBean
+    private com.vn.caro_game.repositories.RoomPlayerRepository roomPlayerRepository;
+
+    @MockBean
+    private com.vn.caro_game.repositories.ChatMessageRepository chatMessageRepository;
+
+    @MockBean
+    private com.vn.caro_game.repositories.GameHistoryRepository gameHistoryRepository;
+
+    @MockBean
+    private com.vn.caro_game.integrations.redis.RedisService redisService;
+
+    @MockBean
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    @MockBean
+    private com.vn.caro_game.mappers.GameRoomMapper gameRoomMapper;
+
+    @MockBean
+    private com.vn.caro_game.mappers.UserMapper userMapper;
+
+    @MockBean
+    private com.vn.caro_game.services.interfaces.IFileUploadService fileUploadService;
+
+    @MockBean
+    private com.vn.caro_game.services.interfaces.GameRoomService gameRoomService;
+
+    @MockBean
+    private com.vn.caro_game.services.interfaces.IUserProfileService userProfileService;
+
+    @MockBean
+    private com.vn.caro_game.repositories.MoveRepository moveRepository;
+
     @Autowired
     private ObjectMapper objectMapper;
 

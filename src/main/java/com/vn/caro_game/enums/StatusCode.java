@@ -45,7 +45,31 @@ public enum StatusCode {
     FRIEND_REQUEST_NOT_FOUND(4013, "Friend request not found"),
     CANNOT_ADD_YOURSELF(4014, "Cannot add yourself as friend"),
     ALREADY_FRIENDS(4015, "Already friends with this user"),
-    FRIEND_REQUEST_ALREADY_RESPONDED(4016, "Friend request already responded");
+    FRIEND_REQUEST_ALREADY_RESPONDED(4016, "Friend request already responded"),
+
+    // Game Room errors
+    ROOM_NOT_FOUND(4017, "Game room not found"),
+    ROOM_IS_FULL(4018, "Game room is full"),
+    ROOM_ALREADY_PLAYING(4019, "Game room is already in progress"),
+    INVALID_JOIN_CODE(4020, "Invalid join code"),
+    NOT_ROOM_MEMBER(4021, "You are not a member of this room"),
+    CANNOT_LEAVE_DURING_GAME(4022, "Cannot leave room during active game"),
+    GAME_NOT_ACTIVE(4031, "Game is not currently active"),
+    ROOM_NAME_TOO_SHORT(4023, "Room name is too short"),
+    ROOM_NAME_TOO_LONG(4024, "Room name is too long"),
+    INVALID_ROOM_TYPE(4025, "Invalid room type"),
+    ALREADY_IN_ROOM(4026, "You are already in this room"),
+    CANNOT_INVITE_YOURSELF(4027, "Cannot invite yourself to room"),
+    USER_ALREADY_IN_ROOM(4028, "User is already in a room"),
+    NOT_FRIENDS_TO_INVITE(4029, "You can only invite friends to private rooms"),
+    CHAT_MESSAGE_TOO_LONG(4030, "Chat message is too long"),
+    
+    // Enhanced Game Room errors for new flow
+    INVALID_GAME_STATE(4032, "Invalid game state for this operation"),
+    ALREADY_REQUESTED(4033, "Request already in progress"),
+    NO_REMATCH_REQUEST(4034, "No rematch request to accept"),
+    INVALID_OPERATION(4035, "Invalid operation"),
+    NOT_IN_ROOM(4036, "You are not in this room");
 
     int code;
     String message;

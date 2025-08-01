@@ -8,6 +8,7 @@ import com.vn.caro_game.entities.User;
 import com.vn.caro_game.enums.FriendStatus;
 import com.vn.caro_game.enums.StatusCode;
 import com.vn.caro_game.exceptions.CustomException;
+import com.vn.caro_game.integrations.redis.RedisService;
 import com.vn.caro_game.repositories.FriendRepository;
 import com.vn.caro_game.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class FriendServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock(lenient = true)
+    private RedisService redisService;
+
     @InjectMocks
     private FriendServiceImpl friendService;
 
@@ -75,6 +79,9 @@ class FriendServiceImplTest {
         testFriendRequest.setId(new Friend.FriendId(1L, 2L));
         testFriendRequest.setStatus(FriendStatus.PENDING);
         testFriendRequest.setCreatedAt(LocalDateTime.now());
+        
+        // Default mock setup for redisService
+        when(redisService.isUserOnline(anyLong())).thenReturn(false);
     }
 
     @Nested
@@ -336,7 +343,7 @@ class FriendServiceImplTest {
             friendship.setStatus(FriendStatus.ACCEPTED);
             friendship.setCreatedAt(LocalDateTime.now());
             
-            when(friendRepository.findAllFriendsWithStatus(userId, FriendStatus.ACCEPTED))
+            when(friendRepository.findUniqueFriendsWithStatus(userId, FriendStatus.ACCEPTED))
                     .thenReturn(Arrays.asList(friendship));
             when(userRepository.findById(2L)).thenReturn(Optional.of(testUser2));
 
@@ -358,7 +365,7 @@ class FriendServiceImplTest {
             // Given
             Long userId = 1L;
             
-            when(friendRepository.findAllFriendsWithStatus(userId, FriendStatus.ACCEPTED))
+            when(friendRepository.findUniqueFriendsWithStatus(userId, FriendStatus.ACCEPTED))
                     .thenReturn(Arrays.asList());
 
             // When
