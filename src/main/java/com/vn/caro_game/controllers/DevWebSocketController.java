@@ -1,18 +1,15 @@
 package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.integrations.redis.RedisService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
@@ -47,11 +44,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Profile("dev")
 @Tag(name = "Development WebSocket", description = "WebSocket testing endpoints (Dev only)")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class DevWebSocketController {
     
-    private final SimpMessagingTemplate messagingTemplate;
-    private final RedisService redisService;
-    private static final long ONLINE_TTL = 300;
+    RedisService redisService;
+    long ONLINE_TTL = 300;
 
     /**
      * Handles WebSocket ping messages and responds with pong.

@@ -22,5 +22,20 @@ public enum GameResult {
     /**
      * Game is still ongoing
      */
-    ONGOING
+    ONGOING,
+    
+    /**
+     * Player won the game (for RoomPlayer)
+     */
+    WIN,
+    
+    /**
+     * Player lost the game (for RoomPlayer)
+     */
+    LOSE,
+    
+    /**
+     * No result yet (for RoomPlayer)
+     */
+    NONE
 }

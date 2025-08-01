@@ -46,6 +46,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         try {
             // Lấy token từ query string
             String uri = request.getURI().toString();
+            System.out.println("=== JWT HANDSHAKE - URI: " + uri);
 
             String token = null;
             if (uri.contains("token=")) {
@@ -57,15 +58,21 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                     
                     // URL decode token
                     token = URLDecoder.decode(token, StandardCharsets.UTF_8);
+                    System.out.println("=== JWT HANDSHAKE - Decoded token: " + token.substring(0, Math.min(20, token.length())) + "...");
                     
                     if (token.startsWith("Bearer ")) {
                         token = token.substring(7);
+                        System.out.println("=== JWT HANDSHAKE - Removed Bearer prefix");
                     }
                     attributes.put("jwt", token);
+                    System.out.println("=== JWT HANDSHAKE - Token stored in attributes");
                 }
+            } else {
+                System.out.println("=== JWT HANDSHAKE - No token parameter found in URI");
             }
             return true;
         } catch (Exception e) {
+            System.out.println("=== JWT HANDSHAKE - ERROR: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

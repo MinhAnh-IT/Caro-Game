@@ -1,5 +1,6 @@
 package com.vn.caro_game.dtos.request;
 
+import com.vn.caro_game.constants.UserProfileConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -34,13 +35,21 @@ import lombok.experimental.FieldDefaults;
 @Schema(description = "Request DTO for updating user profile")
 public class UpdateProfileRequest {
 
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = UserProfileConstants.USERNAME_REQUIRED)
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers and underscores")
-    @Schema(description = "Username for the user", example = "john_doe123")
+    @Schema(
+        description = "Username for the user account. Must be unique across the system.",
+        example = "john_doe123",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     String username;
 
-    @Size(max = 50, message = "Display name cannot exceed 50 characters")
-    @Schema(description = "Display name for the user", example = "John Doe")
+    @Size(max = 50, message = UserProfileConstants.DISPLAY_NAME_MAX_LENGTH)
+    @Schema(
+        description = "Display name shown to other users. Can be different from username.",
+        example = "John Doe",
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
     String displayName;
 }

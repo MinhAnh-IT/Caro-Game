@@ -1,5 +1,7 @@
 package com.vn.caro_game.entities;
 
+import com.vn.caro_game.enums.GameResult;
+import com.vn.caro_game.enums.PlayerReadyState;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,6 +37,23 @@ public class RoomPlayer {
     @CreationTimestamp
     @Column(name = "join_time", nullable = false, updatable = false)
     LocalDateTime joinTime;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "game_result")
+    GameResult gameResult;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ready_state", nullable = false)
+    PlayerReadyState readyState = PlayerReadyState.NOT_READY;
+    
+    @Column(name = "accepted_rematch", nullable = false)
+    Boolean acceptedRematch = false;
+    
+    @Column(name = "has_left", nullable = false)
+    Boolean hasLeft = false;
+    
+    @Column(name = "left_at")
+    LocalDateTime leftAt;
     
     @Embeddable
     @Getter

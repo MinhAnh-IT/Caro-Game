@@ -1,5 +1,6 @@
 package com.vn.caro_game.controllers;
 
+import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.controllers.base.BaseController;
 import com.vn.caro_game.controllers.interfaces.AuthControllerInterface;
 import com.vn.caro_game.dtos.request.*;
@@ -545,7 +546,9 @@ public class AuthController extends BaseController implements AuthControllerInte
     })
     public ResponseEntity<ApiResponse<Void>> requestChangePasswordOtp() {
         
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        String email = userDetails.getEmail();
 
         authService.requestChangePasswordOtp(email);
         
@@ -634,7 +637,9 @@ public class AuthController extends BaseController implements AuthControllerInte
             )
             @Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        String email = userDetails.getEmail();
 
         authService.changePassword(changePasswordRequest, email);
         

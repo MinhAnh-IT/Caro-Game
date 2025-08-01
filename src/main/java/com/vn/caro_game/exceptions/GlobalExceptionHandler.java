@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
         return switch (statusCode) {
             case BAD_REQUEST, EMAIL_ALREADY_EXISTS, USERNAME_ALREADY_EXISTS,
                  CURRENT_PASSWORD_INCORRECT, INVALID_OTP, INVALID_REQUEST,
-                 FILE_TOO_LARGE, INVALID_FILE_TYPE -> HttpStatus.BAD_REQUEST;
+                 FILE_TOO_LARGE, INVALID_FILE_TYPE, FILE_UPLOAD_ERROR -> HttpStatus.BAD_REQUEST;
             case UNAUTHORIZED, INVALID_CREDENTIALS, INVALID_REFRESH_TOKEN -> HttpStatus.UNAUTHORIZED;
             case FORBIDDEN, ACCOUNT_LOCKED -> HttpStatus.FORBIDDEN;
             case NOT_FOUND, USER_NOT_FOUND, EMAIL_NOT_FOUND -> HttpStatus.NOT_FOUND;
@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
         return switch (statusCode) {
             case BAD_REQUEST, EMAIL_ALREADY_EXISTS, USERNAME_ALREADY_EXISTS,
                  CURRENT_PASSWORD_INCORRECT, INVALID_OTP, INVALID_REQUEST,
-                 FILE_TOO_LARGE, INVALID_FILE_TYPE -> HttpStatusConstants.BAD_REQUEST;
+                 FILE_TOO_LARGE, INVALID_FILE_TYPE, FILE_UPLOAD_ERROR -> HttpStatusConstants.BAD_REQUEST;
             case UNAUTHORIZED, INVALID_CREDENTIALS, INVALID_REFRESH_TOKEN -> HttpStatusConstants.UNAUTHORIZED;
             case FORBIDDEN, ACCOUNT_LOCKED -> HttpStatusConstants.FORBIDDEN;
             case NOT_FOUND, USER_NOT_FOUND, EMAIL_NOT_FOUND -> HttpStatusConstants.NOT_FOUND;

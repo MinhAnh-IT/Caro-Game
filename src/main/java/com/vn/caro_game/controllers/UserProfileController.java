@@ -1,10 +1,11 @@
 package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.configs.CustomUserDetails;
+import com.vn.caro_game.constants.UserProfileConstants;
 import com.vn.caro_game.dtos.request.UpdateProfileRequest;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.UserProfileResponse;
-import com.vn.caro_game.services.UserProfileService;
+import com.vn.caro_game.services.interfaces.IUserProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,8 +37,17 @@ import org.springframework.web.multipart.MultipartFile;
 )
 public class UserProfileController {
 
-    UserProfileService userProfileService;
+    IUserProfileService userProfileService;
 
+    /**
+     * Retrieves the profile information of the currently authenticated user.
+     * 
+     * This endpoint returns comprehensive user profile data including user identification,
+     * display information, and account metadata. Authentication is required through JWT token.
+     *
+     * @param userDetails the authenticated user details from security context
+     * @return ResponseEntity containing user profile data
+     */
     @GetMapping()
     @Operation(
         summary = "Get current user profile",
@@ -51,7 +61,7 @@ public class UserProfileController {
             
             **Authentication Required**: This endpoint requires a valid JWT token in the Authorization header.
             """,
-        operationId = "getCurrentUserProfile"
+        operationId = UserProfileConstants.GET_USER_PROFILE_OPERATION_ID
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -92,9 +102,19 @@ public class UserProfileController {
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         var result = userProfileService.getUserProfile(userDetails.getUserId());
-        return ResponseEntity.ok(ApiResponse.success("User profile retrieved successfully", result));
+        return ResponseEntity.ok(ApiResponse.success(UserProfileConstants.USER_PROFILE_RETRIEVED_SUCCESS, result));
     }
 
+    /**
+     * Updates the profile information of the currently authenticated user.
+     * 
+     * This endpoint allows users to update their username and display name.
+     * All input data is validated before processing and users can only update their own profile.
+     *
+     * @param userDetails the authenticated user details from security context
+     * @param request the profile update request containing new information
+     * @return ResponseEntity containing updated user profile data
+     */
     @PutMapping()
     @Operation(
         summary = "Update user profile information",
@@ -109,7 +129,7 @@ public class UserProfileController {
             **Security:** Users can only update their own profile data.
             **Validation:** All input data is validated before processing.
             """,
-        operationId = "updateUserProfile"
+        operationId = UserProfileConstants.UPDATE_USER_PROFILE_OPERATION_ID
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -172,9 +192,19 @@ public class UserProfileController {
         @Valid @RequestBody UpdateProfileRequest request
     ) {
         var result = userProfileService.updateProfile(userDetails.getUserId(), request);
-        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", result));
+        return ResponseEntity.ok(ApiResponse.success(UserProfileConstants.PROFILE_UPDATED_SUCCESS, result));
     }
 
+    /**
+     * Uploads a new avatar image for the currently authenticated user.
+     * 
+     * This endpoint handles avatar file upload with validation for file format and size.
+     * It automatically replaces existing avatar and generates unique filename to prevent conflicts.
+     *
+     * @param userDetails the authenticated user details from security context
+     * @param avatarFile the avatar image file to upload
+     * @return ResponseEntity containing updated user profile data with new avatar URL
+     */
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Upload user avatar",
@@ -191,7 +221,7 @@ public class UserProfileController {
             - Automatically deletes old avatar file
             - Generates unique filename to prevent conflicts
             """,
-        operationId = "uploadUserAvatar"
+        operationId = UserProfileConstants.UPLOAD_AVATAR_OPERATION_ID
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -252,13 +282,24 @@ public class UserProfileController {
             required = true,
             content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
         )
-        @RequestParam("avatar") MultipartFile avatarFile
+        @RequestParam(UserProfileConstants.AVATAR_PARAM_NAME) MultipartFile avatarFile
     ) {
-        log.info("upload avatar process");
+        log.info("Starting avatar upload process for user: {}", userDetails.getUserId());
         var result = userProfileService.updateAvatar(userDetails.getUserId(), avatarFile);
-        return ResponseEntity.ok(ApiResponse.success("Avatar uploaded successfully", result));
+        return ResponseEntity.ok(ApiResponse.success(UserProfileConstants.AVATAR_UPLOADED_SUCCESS, result));
     }
 
+    /**
+     * Updates both profile information and avatar in a single request.
+     * 
+     * This endpoint performs an atomic operation to update both profile data and avatar.
+     * Either both operations succeed or both fail to maintain data consistency.
+     *
+     * @param userDetails the authenticated user details from security context
+     * @param request the profile update request containing new information
+     * @param avatarFile the optional avatar image file to upload
+     * @return ResponseEntity containing updated user profile data
+     */
     @PutMapping(value = "/complete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "Update profile and avatar together",
@@ -271,7 +312,7 @@ public class UserProfileController {
             - Optional avatar - can update profile without changing avatar
             - Validates all data before making any changes
             """,
-        operationId = "updateCompleteProfile"
+        operationId = UserProfileConstants.UPDATE_COMPLETE_PROFILE_OPERATION_ID
     )
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -290,9 +331,10 @@ public class UserProfileController {
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateCompleteProfile(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
         @Parameter(description = "Profile update request") @Valid UpdateProfileRequest request,
-        @Parameter(description = "Optional avatar file") @RequestParam(value = "avatar", required = false) MultipartFile avatarFile
+        @Parameter(description = "Optional avatar file") @RequestParam(value = UserProfileConstants.AVATAR_PARAM_NAME, required = false) MultipartFile avatarFile
     ) {
+        log.info("Starting complete profile update for user: {}", userDetails.getUserId());
         var result = userProfileService.updateProfileWithAvatar(userDetails.getUserId(), request, avatarFile);
-        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", result));
+        return ResponseEntity.ok(ApiResponse.success(UserProfileConstants.PROFILE_UPDATED_SUCCESS, result));
     }
 }
