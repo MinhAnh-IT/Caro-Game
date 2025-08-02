@@ -3,6 +3,14 @@ package com.vn.caro_game.controllers;
 import com.vn.caro_game.controllers.base.BaseController;
 import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.services.interfaces.GameRoomService;
+import com.vn.caro_game.integrations.redis.RedisService;
+import com.vn.caro_game.repositories.GameRoomRepository;
+import com.vn.caro_game.repositories.RoomPlayerRepository;
+import com.vn.caro_game.entities.GameRoom;
+import com.vn.caro_game.entities.RoomPlayer;
+import com.vn.caro_game.mappers.GameRoomMapper;
+import com.vn.caro_game.exceptions.CustomException;
+import com.vn.caro_game.enums.StatusCode;
 import com.vn.caro_game.dtos.request.*;
 import com.vn.caro_game.dtos.response.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +29,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 
 /**
@@ -38,6 +49,10 @@ import org.springframework.web.bind.annotation.*;
 public class GameRoomController extends BaseController {
 
     private final GameRoomService gameRoomService;
+    private final GameRoomRepository gameRoomRepository;
+    private final RoomPlayerRepository roomPlayerRepository;
+    private final GameRoomMapper gameRoomMapper;
+    private final RedisService redisService;
 
     /**
      * Creates a new game room with specified type and settings.
@@ -224,6 +239,94 @@ public class GameRoomController extends BaseController {
     }
 
     /**
+     * Joins a room using a join code (for private rooms).
+     */
+    @Operation(summary = "Join room by code", description = "Join a private room using its unique join code")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Joined room successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid join code"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4017", description = "Room not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4018", description = "Room is full"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4026", description = "User already in another room"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/join-by-code")
+    public ResponseEntity<ApiResponse<GameRoomResponse>> joinRoomByCode(
+            @Valid @RequestBody JoinRoomRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        GameRoomResponse response = gameRoomService.joinRoomByCode(request, userDetails.getUserId());
+        return success(response, "Joined room successfully");
+    }
+
+    /**
+     * Joins a room by room ID (for public rooms).
+     */
+    @Operation(summary = "Join room by ID", description = "Join a public room using its room ID")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Joined room successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Cannot join room"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Room not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4017", description = "Room not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4018", description = "Room is full"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4026", description = "User already in another room"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/{roomId}/join")
+    public ResponseEntity<ApiResponse<GameRoomResponse>> joinRoomById(
+            @PathVariable Long roomId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        GameRoomResponse response = gameRoomService.joinRoom(roomId, userDetails.getUserId());
+        return success(response, "Joined room successfully");
+    }
+
+    /**
+     * Leaves the current room.
+     */
+    @Operation(summary = "Leave room", description = "Leave the current room")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Left room successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Room not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4017", description = "Room not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "4021", description = "User not in room"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/{roomId}/leave")
+    public ResponseEntity<ApiResponse<Void>> leaveRoom(
+            @PathVariable Long roomId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        gameRoomService.leaveRoom(roomId, userDetails.getUserId());
+        return success("Left room successfully");
+    }
+
+    /**
+     * Finds a room by its join code (for private room discovery).
+     */
+    @Operation(summary = "Find room by code", description = "Find room information using join code (for private room discovery)")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Room found successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Room not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/find-by-code/{joinCode}")
+    public ResponseEntity<ApiResponse<GameRoomResponse>> findRoomByCode(
+            @PathVariable String joinCode,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        // Find room by join code without joining
+        GameRoom room = gameRoomRepository.findByJoinCode(joinCode)
+                .orElseThrow(() -> new CustomException(StatusCode.INVALID_JOIN_CODE));
+        
+        // Build room response for discovery
+        List<RoomPlayerResponse> players = buildRoomPlayerResponses(room.getId());
+        GameRoomResponse response = gameRoomMapper.mapToGameRoomResponse(room, players);
+        
+        return success(response, "Room found successfully");
+    }
+
+    /**
      * Creates a rematch for a finished game room (legacy API).
      */
     @Operation(summary = "Create rematch", description = "Create a new room for rematch with the same players")
@@ -243,6 +346,18 @@ public class GameRoomController extends BaseController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         GameRoomResponse response = gameRoomService.createRematch(roomId, userDetails.getUserId());
         return success(response, "Rematch room created successfully");
+    }
+
+    private List<RoomPlayerResponse> buildRoomPlayerResponses(Long roomId) {
+        // This would normally be in the service layer, but adding here for the find endpoint
+        List<RoomPlayer> roomPlayers = roomPlayerRepository.findByRoom_Id(roomId);
+        
+        return roomPlayers.stream()
+                .map(roomPlayer -> {
+                    boolean isOnline = redisService.isUserOnline(roomPlayer.getUser().getId());
+                    return gameRoomMapper.mapToRoomPlayerResponse(roomPlayer, isOnline);
+                })
+                .collect(Collectors.toList());
     }
 
 }

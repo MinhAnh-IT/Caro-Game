@@ -97,6 +97,12 @@ class FriendControllerTest {
     @MockBean
     private com.vn.caro_game.repositories.MoveRepository moveRepository;
 
+    @MockBean
+    private com.vn.caro_game.repositories.GameMatchRepository gameMatchRepository;
+
+    @MockBean
+    private com.vn.caro_game.services.interfaces.CaroGameService caroGameService;
+
     @Autowired
     private ObjectMapper objectMapper;
 

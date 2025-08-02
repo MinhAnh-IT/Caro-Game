@@ -69,7 +69,13 @@ public enum StatusCode {
     ALREADY_REQUESTED(4033, "Request already in progress"),
     NO_REMATCH_REQUEST(4034, "No rematch request to accept"),
     INVALID_OPERATION(4035, "Invalid operation"),
-    NOT_IN_ROOM(4036, "You are not in this room");
+    NOT_IN_ROOM(4036, "You are not in this room"),
+    
+    // Game Move errors
+    INVALID_GAME_MOVE(4037, "Invalid game move"),
+    NOT_PLAYER_TURN(4038, "It's not your turn"),
+    PLAYER_NOT_IN_ROOM(4039, "Player is not in this room"),
+    NO_ACTIVE_MATCH(4040, "No active match found");
 
     int code;
     String message;

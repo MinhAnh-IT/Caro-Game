@@ -1,6 +1,7 @@
 package com.vn.caro_game.repositories;
 
 import com.vn.caro_game.entities.GameMatch;
+import com.vn.caro_game.entities.GameRoom;
 import com.vn.caro_game.enums.GameResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,8 @@ import java.util.Optional;
 public interface GameMatchRepository extends JpaRepository<GameMatch, Long> {
     
     List<GameMatch> findByRoomId(Long roomId);
+    
+    Optional<GameMatch> findByRoomAndResult(GameRoom room, GameResult result);
     
     @Query("SELECT gm FROM GameMatch gm WHERE gm.playerX.id = :userId OR gm.playerO.id = :userId")
     List<GameMatch> findByPlayerId(@Param("userId") Long userId);
