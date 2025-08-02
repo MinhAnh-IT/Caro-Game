@@ -1,6 +1,7 @@
 package com.vn.caro_game.repositories;
 
 import com.vn.caro_game.entities.Move;
+import com.vn.caro_game.entities.GameMatch;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,10 @@ import java.util.List;
 public interface MoveRepository extends JpaRepository<Move, Long> {
     
     List<Move> findByMatchIdOrderByMoveNumberAsc(Long matchId);
+    
+    List<Move> findByMatchOrderByMoveNumber(GameMatch match);
+    
+    int countByMatch(GameMatch match);
     
     @Query("SELECT m FROM Move m WHERE m.match.id = :matchId AND m.player.id = :playerId " +
            "ORDER BY m.moveNumber ASC")

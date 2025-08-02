@@ -64,6 +64,15 @@ class GameRoomControllerTest {
     private com.vn.caro_game.repositories.FriendRepository friendRepository;
 
     @MockBean
+    private com.vn.caro_game.repositories.GameMatchRepository gameMatchRepository;
+
+    @MockBean
+    private com.vn.caro_game.repositories.MoveRepository moveRepository;
+
+    @MockBean
+    private com.vn.caro_game.repositories.GameHistoryRepository gameHistoryRepository;
+
+    @MockBean
     private com.vn.caro_game.integrations.redis.RedisService redisService;
 
     @MockBean
@@ -71,6 +80,9 @@ class GameRoomControllerTest {
 
     @MockBean
     private com.vn.caro_game.mappers.GameRoomMapper gameRoomMapper;
+
+    @MockBean
+    private com.vn.caro_game.services.interfaces.CaroGameService caroGameService;
 
     @Autowired
     private ObjectMapper objectMapper;

@@ -595,7 +595,7 @@ Topic: /topic/room/{roomId}
                         <span class="method send">SEND</span>
                         <i class="fas fa-mouse-pointer"></i> Thực hiện nước đi
                     </h3>
-                    <div class="endpoint-url">/app/room/{roomId}/move</div>
+                    <div class="endpoint-url">/app/game/{roomId}/move</div>
                 </div>
                 <div class="endpoint-content">
                     <div class="endpoint-description">
@@ -605,8 +605,8 @@ Topic: /topic/room/{roomId}
                         <h4><i class="fas fa-paper-plane"></i> Payload:</h4>
                         <div class="code-block">
 {
-  "<span class="string">row</span>": <span class="number">7</span>,
-  "<span class="string">col</span>": <span class="number">8</span>
+  "<span class="string">xPosition</span>": <span class="number">7</span>,
+  "<span class="string">yPosition</span>": <span class="number">8</span>
 }
                         </div>
                     </div>
@@ -614,17 +614,23 @@ Topic: /topic/room/{roomId}
                         <h4><i class="fas fa-bell"></i> Response Events:</h4>
                         <div class="code-block">
 <span class="comment">// Move made event</span>
-Topic: /topic/room/{roomId}/moves
+Topic: /topic/game/{roomId}/move
 {
-  "<span class="string">type</span>": "<span class="string">MOVE_MADE</span>",
-  "<span class="string">data</span>": {
-    "<span class="string">playerId</span>": <span class="number">123</span>,
-    "<span class="string">row</span>": <span class="number">7</span>,
-    "<span class="string">col</span>": <span class="number">8</span>,
-    "<span class="string">symbol</span>": "<span class="string">X</span>",
-    "<span class="string">nextTurn</span>": "<span class="string">O</span>",
-    "<span class="string">moveTimestamp</span>": "<span class="string">2025-01-08T10:35:00Z</span>"
-  }
+  "<span class="string">roomId</span>": <span class="number">123</span>,
+  "<span class="string">matchId</span>": <span class="number">456</span>,
+  "<span class="string">xPosition</span>": <span class="number">7</span>,
+  "<span class="string">yPosition</span>": <span class="number">8</span>,
+  "<span class="string">playerId</span>": <span class="number">123</span>,
+  "<span class="string">playerSymbol</span>": "<span class="string">X</span>",
+  "<span class="string">moveNumber</span>": <span class="number">15</span>,
+  "<span class="string">nextTurnPlayerId</span>": <span class="number">456</span>,
+  "<span class="string">gameState</span>": "<span class="string">IN_PROGRESS</span>",
+  "<span class="string">gameResult</span>": "<span class="string">ONGOING</span>",
+  "<span class="string">winnerId</span>": null,
+  "<span class="string">board</span>": [[<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,...], ...],
+  "<span class="string">isValidMove</span>": true,
+  "<span class="string">message</span>": "<span class="string">Move successful</span>",
+  "<span class="string">timestamp</span>": "<span class="string">2025-01-08T10:35:00.123456</span>"
 }
 
 <span class="comment">// Game win event (nếu thắng)</span>
@@ -636,6 +642,42 @@ Topic: /topic/room/{roomId}/moves
     "<span class="string">winningSequence</span>": [[<span class="number">7</span>,<span class="number">8</span>], [<span class="number">8</span>,<span class="number">9</span>], [<span class="number">9</span>,<span class="number">10</span>], [<span class="number">10</span>,<span class="number">11</span>], [<span class="number">11</span>,<span class="number">12</span>]],
     "<span class="string">gameEndReason</span>": "<span class="string">WIN</span>",
     "<span class="string">gameEndedAt</span>": "<span class="string">2025-01-08T10:45:00Z</span>"
+  }
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <h3>
+                        <span class="method send">SEND</span>
+                        <i class="fas fa-flag"></i> Đầu hàng
+                    </h3>
+                    <div class="endpoint-url">/app/room/{roomId}/surrender</div>
+                </div>
+                <div class="endpoint-content">
+                    <div class="endpoint-description">
+                        Player đầu hàng và tự động thua game. Game sẽ kết thúc ngay lập tức.
+                    </div>
+                    <div class="payload-section">
+                        <h4><i class="fas fa-paper-plane"></i> Payload:</h4>
+                        <div class="code-block">{}</div>
+                    </div>
+                    <div class="payload-section">
+                        <h4><i class="fas fa-bell"></i> Response Events:</h4>
+                        <div class="code-block">
+<span class="comment">// Game ended by surrender</span>
+Topic: /topic/room/{roomId}
+{
+  "<span class="string">type</span>": "<span class="string">GAME_ENDED</span>",
+  "<span class="string">data</span>": {
+    "<span class="string">gameResult</span>": "<span class="string">SURRENDER</span>",
+    "<span class="string">winnerId</span>": <span class="number">456</span>,
+    "<span class="string">loserId</span>": <span class="number">123</span>,
+    "<span class="string">endedAt</span>": "<span class="string">2025-01-08T10:45:00Z</span>",
+    "<span class="string">endReason</span>": "<span class="string">Player surrendered</span>"
   }
 }
                         </div>
@@ -860,7 +902,7 @@ stompClient.subscribe(`/topic/room/${roomId}`, function(message) {
                         <span class="method subscribe">SUBSCRIBE</span>
                         <i class="fas fa-chess"></i> Game Moves
                     </h3>
-                    <div class="endpoint-url">/topic/room/{roomId}/moves</div>
+                    <div class="endpoint-url">/topic/game/{roomId}/move</div>
                 </div>
                 <div class="endpoint-content">
                     <div class="endpoint-description">
@@ -874,6 +916,67 @@ stompClient.subscribe(`/topic/room/${roomId}`, function(message) {
 - GAME_WON            <span class="comment">// Game có người thắng</span>
 - GAME_DRAW           <span class="comment">// Game hòa</span>
 - INVALID_MOVE        <span class="comment">// Nước đi không hợp lệ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <h3>
+                        <span class="method subscribe">SUBSCRIBE</span>
+                        <i class="fas fa-flag-checkered"></i> Game End Events
+                    </h3>
+                    <div class="endpoint-url">/topic/game/{roomId}/end</div>
+                </div>
+                <div class="endpoint-content">
+                    <div class="endpoint-description">
+                        Subscribe để nhận thông báo khi game kết thúc (win, draw, surrender). Topic này chỉ được broadcast khi game state = FINISHED.
+                    </div>
+                    <div class="payload-section">
+                        <h4><i class="fas fa-bell"></i> Message Format:</h4>
+                        <div class="code-block">
+{
+  "<span class="string">roomId</span>": <span class="number">123</span>,
+  "<span class="string">matchId</span>": <span class="number">456</span>,
+  "<span class="string">gameState</span>": "<span class="string">FINISHED</span>",
+  "<span class="string">gameResult</span>": "<span class="string">WIN</span>", <span class="comment">// WIN, DRAW, SURRENDER</span>
+  "<span class="string">winnerId</span>": <span class="number">123</span>,
+  "<span class="string">board</span>": [[<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,...], ...],
+  "<span class="string">message</span>": "<span class="string">Game won</span>",
+  "<span class="string">timestamp</span>": "<span class="string">2025-01-08T10:35:00.123456</span>"
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <h3>
+                        <span class="method subscribe">SUBSCRIBE</span>
+                        <i class="fas fa-list"></i> Global Room Updates
+                    </h3>
+                    <div class="endpoint-url">/topic/room-updates</div>
+                </div>
+                <div class="endpoint-content">
+                    <div class="endpoint-description">
+                        Subscribe để nhận thông báo về tất cả room updates toàn cục (room created, deleted, player count changes).
+                    </div>
+                    <div class="payload-section">
+                        <h4><i class="fas fa-bell"></i> Message Format:</h4>
+                        <div class="code-block">
+{
+  "<span class="string">type</span>": "<span class="string">ROOM_UPDATED</span>",
+  "<span class="string">data</span>": {
+    "<span class="string">roomId</span>": <span class="number">123</span>,
+    "<span class="string">roomName</span>": "<span class="string">My Room</span>",
+    "<span class="string">playerCount</span>": <span class="number">2</span>,
+    "<span class="string">maxPlayers</span>": <span class="number">2</span>,
+    "<span class="string">status</span>": "<span class="string">WAITING</span>",
+    "<span class="string">updateType</span>": "<span class="string">PLAYER_JOINED</span>"
+  }
+}
                         </div>
                     </div>
                 </div>
@@ -1209,8 +1312,15 @@ class CaroWebSocketClient {
         
         <span class="comment">// Game moves</span>
         this.subscriptions.push(
-            this.stompClient.subscribe(`/topic/room/${this.roomId}/moves`, 
+            this.stompClient.subscribe(`/topic/game/${this.roomId}/move`, 
                 message => this.handleMoveEvent(JSON.parse(message.body))
+            )
+        );
+        
+        <span class="comment">// Game end events</span>
+        this.subscriptions.push(
+            this.stompClient.subscribe(`/topic/game/${this.roomId}/end`, 
+                message => this.handleGameEndEvent(JSON.parse(message.body))
             )
         );
         
@@ -1266,6 +1376,30 @@ class CaroWebSocketClient {
         if (this.isConnected) {
             this.stompClient.send(`/app/room/${this.roomId}/rematch/accept`, {}, '{}');
         }
+    }
+
+    surrender() {
+        if (this.isConnected) {
+            this.stompClient.send(`/app/room/${this.roomId}/surrender`, {}, '{}');
+        }
+    }
+
+    <span class="comment">// Handle game end events (win, draw, surrender)</span>
+    handleGameEndEvent(event) {
+        console.log('<span class="string">Game ended:</span>', event);
+        switch(event.gameResult) {
+            case '<span class="string">WIN</span>':
+                this.showGameResult('Game Over', `Player ${event.winnerId} wins!`);
+                break;
+            case '<span class="string">DRAW</span>':
+                this.showGameResult('Game Over', 'It\'s a draw!');
+                break;
+            case '<span class="string">SURRENDER</span>':
+                this.showGameResult('Game Over', `Player ${event.winnerId} wins by surrender!`);
+                break;
+        }
+        this.disableGameBoard();
+        this.showRematchButton();
     }
 
     disconnect() {
