@@ -2,6 +2,7 @@ package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.constants.UserProfileConstants;
+import com.vn.caro_game.controllers.base.BaseController;
 import com.vn.caro_game.dtos.request.UpdateProfileRequest;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.UserProfileResponse;
@@ -35,7 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
     name = "User Profile Management",
     description = "APIs for managing user profile information, updating user data, and handling avatar uploads"
 )
-public class UserProfileController {
+public class UserProfileController extends BaseController {
 
     IUserProfileService userProfileService;
 

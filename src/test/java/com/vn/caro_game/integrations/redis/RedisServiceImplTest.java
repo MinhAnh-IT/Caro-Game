@@ -332,6 +332,37 @@ class RedisServiceImplTest {
         verify(redisTemplate).hasKey("online:2");
     }
 
+    @Test
+    void getFriendsOnlineStatus_WithDuplicateFriendships_ShouldReturnNoDuplicates() {
+        // Given - Simulate the database returning both directions of friendship
+        Long userId = 1L;
+        Long friendId = 2L;
+        
+        // Create both friendship directions (as would exist in DB)
+        Friend friendship1 = createFriendship(userId, friendId, "John Doe", "john.jpg");
+        Friend friendship2 = createReverseFriendship(friendId, userId, "John Doe", "john.jpg");
+        
+        List<Friend> friendships = Arrays.asList(friendship1, friendship2);
+        
+        when(friendRepository.findAcceptedFriendshipsByUserId(userId)).thenReturn(friendships);
+        when(redisTemplate.hasKey("online:2")).thenReturn(true);
+
+        // When
+        List<FriendOnlineStatusResponse> result = redisService.getFriendsOnlineStatus(userId);
+
+        // Then - Should only return one friend, not two
+        assertNotNull(result);
+        assertEquals(1, result.size(), "Should only return one instance of the friend, not duplicates");
+
+        FriendOnlineStatusResponse friend = result.get(0);
+        assertEquals(friendId, friend.getUserId());
+        assertEquals("John Doe", friend.getDisplayName());
+        assertEquals("john.jpg", friend.getAvatarUrl());
+        assertTrue(friend.getStatus());
+
+        verify(redisTemplate, times(1)).hasKey("online:2");
+    }
+
     private Friend createFriendship(Long userId, Long friendId, String displayName, String avatarUrl) {
         Friend friendship = new Friend();
         Friend.FriendId id = new Friend.FriendId(userId, friendId);

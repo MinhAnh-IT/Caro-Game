@@ -26,4 +26,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "u.id != :currentUserId")
     List<User> findUsersByDisplayNameOrUsername(@Param("searchTerm") String searchTerm,
                                                @Param("currentUserId") Long currentUserId);
+
+    /**
+     * Finds users who have game history (either won or lost games)
+     */
+    @Query("SELECT DISTINCT u FROM User u WHERE " +
+           "u.id IN (SELECT gh.winnerId FROM GameHistory gh WHERE gh.winnerId IS NOT NULL) OR " +
+           "u.id IN (SELECT gh.loserId FROM GameHistory gh WHERE gh.loserId IS NOT NULL)")
+    List<User> findUsersWithGameHistory();
 }

@@ -1,6 +1,7 @@
 package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.configs.CustomUserDetails;
+import com.vn.caro_game.controllers.base.BaseController;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.FriendOnlineStatusResponse;
 import com.vn.caro_game.integrations.redis.RedisService;
@@ -41,7 +42,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Online Status", description = "APIs for managing and checking user online status")
-public class OnlineStatusController {
+public class OnlineStatusController extends BaseController {
     RedisService redisService;
 
     @Operation(

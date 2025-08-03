@@ -58,9 +58,7 @@ public class GameRoomMapper {
             isOnline,
             roomPlayer.getReadyState(),
             roomPlayer.getGameResult(),
-            roomPlayer.getAcceptedRematch(),
-            roomPlayer.getHasLeft(),
-            roomPlayer.getLeftAt()
+            roomPlayer.getAcceptedRematch()
         );
     }
 
@@ -98,7 +96,10 @@ public class GameRoomMapper {
             gameRoom.bothPlayersReady(),
             gameRoom.canStartGame(),
             gameRoom.canRematch(),
-            gameRoom.isGameActive()
+            gameRoom.isGameActive(),
+            // canMarkReady: true if room has enough players AND game is waiting for ready state
+            (players != null ? players.size() : 0) >= 2 && 
+            gameRoom.getGameState() == com.vn.caro_game.enums.GameState.WAITING_FOR_READY
         );
     }
 

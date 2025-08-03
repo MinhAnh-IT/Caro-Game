@@ -40,9 +40,6 @@ public class GameHistory {
     @Column(name = "game_ended_at")
     LocalDateTime gameEndedAt;
     
-    @Column(name = "game_data", columnDefinition = "TEXT")
-    String gameData; 
-    
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt;

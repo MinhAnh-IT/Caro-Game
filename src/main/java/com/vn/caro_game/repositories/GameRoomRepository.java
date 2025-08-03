@@ -35,6 +35,15 @@ public interface GameRoomRepository extends JpaRepository<GameRoom, Long> {
     Optional<GameRoom> findByJoinCode(String joinCode);
     
     /**
+     * Finds a room by ID with its players eagerly loaded.
+     * 
+     * @param id the room ID
+     * @return Optional containing the room with players if found
+     */
+    @Query("SELECT gr FROM GameRoom gr LEFT JOIN FETCH gr.roomPlayers WHERE gr.id = :id")
+    Optional<GameRoom> findByIdWithPlayers(@Param("id") Long id);
+    
+    /**
      * Finds rooms created by a specific user.
      */
     List<GameRoom> findByCreatedBy_Id(Long userId);

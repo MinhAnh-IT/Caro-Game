@@ -87,6 +87,9 @@ public class GameRoomResponse {
     @Schema(description = "Whether game is currently active", example = "false")
     Boolean isGameActive;
 
+    @Schema(description = "Whether players can mark ready", example = "true")
+    Boolean canMarkReady;
+
     // Legacy constructor for backward compatibility
     public GameRoomResponse(Long id, String name, RoomStatus status, Boolean isPrivate, String joinCode,
                            UserSummaryResponse createdBy, LocalDateTime createdAt, List<RoomPlayerResponse> players,
@@ -110,6 +113,7 @@ public class GameRoomResponse {
         this.canStartGame = false;
         this.canRematch = false;
         this.isGameActive = false;
+        this.canMarkReady = currentPlayerCount >= maxPlayers;
     }
 
     // Full constructor for enhanced features
@@ -118,7 +122,7 @@ public class GameRoomResponse {
                            UserSummaryResponse createdBy, LocalDateTime createdAt, LocalDateTime gameStartedAt,
                            LocalDateTime gameEndedAt, List<RoomPlayerResponse> players, Integer currentPlayerCount,
                            Integer maxPlayers, Long readyPlayersCount, Boolean bothPlayersReady, Boolean canStartGame,
-                           Boolean canRematch, Boolean isGameActive) {
+                           Boolean canRematch, Boolean isGameActive, Boolean canMarkReady) {
         this.id = id;
         this.name = name;
         this.status = status;
@@ -140,5 +144,6 @@ public class GameRoomResponse {
         this.canStartGame = canStartGame;
         this.canRematch = canRematch;
         this.isGameActive = isGameActive;
+        this.canMarkReady = canMarkReady;
     }
 }

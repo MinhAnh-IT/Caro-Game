@@ -2,7 +2,6 @@ package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.controllers.base.BaseController;
-import com.vn.caro_game.controllers.interfaces.AuthControllerInterface;
 import com.vn.caro_game.dtos.request.*;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.AuthResponse;
@@ -52,7 +51,7 @@ import org.springframework.web.bind.annotation.*;
     name = "Authentication", 
     description = "Complete authentication system with user management, security, and token operations"
 )
-public class AuthController extends BaseController implements AuthControllerInterface {
+public class AuthController extends BaseController {
     
     AuthService authService;
     

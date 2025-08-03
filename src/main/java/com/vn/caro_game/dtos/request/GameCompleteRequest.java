@@ -20,6 +20,4 @@ public class GameCompleteRequest {
     
     @NotNull(message = "Loser ID is required")
     Long loserId;
-    
-    String gameData; // Optional game board data or moves
 }
