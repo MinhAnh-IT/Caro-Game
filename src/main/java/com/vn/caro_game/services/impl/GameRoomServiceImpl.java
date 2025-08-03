@@ -647,7 +647,7 @@ public class GameRoomServiceImpl implements GameRoomService {
         // Validate room has exactly 2 players
         Integer playerCount = gameRoomRepository.countPlayersByRoomId(roomId);
         if (playerCount != GameRoomConstants.MAX_PLAYERS_PER_ROOM) {
-            throw new CustomException(StatusCode.ROOM_IS_FULL);
+            throw new CustomException(StatusCode.INSUFFICIENT_PLAYERS);
         }
 
         // Update room status
@@ -756,7 +756,6 @@ public class GameRoomServiceImpl implements GameRoomService {
         roomPlayer.setGameResult(GameResult.NONE);
         roomPlayer.setReadyState(PlayerReadyState.NOT_READY);
         roomPlayer.setAcceptedRematch(false);
-        roomPlayer.setHasLeft(false);
 
         roomPlayerRepository.save(roomPlayer);
         log.info("Successfully added user {} to room {} as {}", user.getId(), room.getId(), 
@@ -949,17 +948,22 @@ public class GameRoomServiceImpl implements GameRoomService {
 
         // Check if both players are ready
         long readyCount = room.getReadyPlayersCount();
+        Integer playerCount = gameRoomRepository.countPlayersByRoomId(roomId);
         Map<String, Object> updateData = Map.of(
             "readyCount", readyCount,
-            "playersReady", readyCount + "/2"
+            "playersReady", readyCount + "/" + playerCount,
+            "totalPlayers", playerCount
         );
 
         // Broadcast ready update
         broadcastRoomUpdate(roomId, "PLAYER_READY", updateData);
 
-        // Auto-start game if both ready
-        if (room.bothPlayersReady()) {
+        // Auto-start game only if we have exactly 2 players and both are ready
+        if (playerCount == GameRoomConstants.MAX_PLAYERS_PER_ROOM && room.bothPlayersReady()) {
             startGameAutomatically(room);
+        } else {
+            log.info("Room {} not ready to auto-start: playerCount={}, bothReady={}", 
+                roomId, playerCount, room.bothPlayersReady());
         }
     }
 
@@ -1128,6 +1132,14 @@ public class GameRoomServiceImpl implements GameRoomService {
     private void startGameAutomatically(GameRoom room) {
         log.info("Auto-starting game in room {}", room.getId());
 
+        // Validate room has exactly 2 players before starting
+        Integer playerCount = gameRoomRepository.countPlayersByRoomId(room.getId());
+        if (playerCount != GameRoomConstants.MAX_PLAYERS_PER_ROOM) {
+            log.error("Cannot start game in room {} - invalid player count: {}, expected: {}", 
+                room.getId(), playerCount, GameRoomConstants.MAX_PLAYERS_PER_ROOM);
+            throw new CustomException(StatusCode.ROOM_IS_FULL);
+        }
+
         // Update room state
         room.setGameState(GameState.IN_PROGRESS);
         room.setStatus(RoomStatus.PLAYING);
@@ -1192,7 +1204,6 @@ public class GameRoomServiceImpl implements GameRoomService {
             newPlayer.setIsHost(oldPlayer.getIsHost());
             newPlayer.setReadyState(PlayerReadyState.NOT_READY);
             newPlayer.setAcceptedRematch(false);
-            newPlayer.setHasLeft(false);
             newPlayer.setGameResult(GameResult.NONE);
 
             roomPlayerRepository.save(newPlayer);
@@ -1222,7 +1233,6 @@ public class GameRoomServiceImpl implements GameRoomService {
         response.setEndReason(history.getEndReason());
         response.setGameStartedAt(history.getGameStartedAt());
         response.setGameEndedAt(history.getGameEndedAt());
-        response.setGameData(history.getGameData());
         response.setCreatedAt(history.getCreatedAt());
 
         // Set computed fields
@@ -1307,9 +1317,6 @@ public class GameRoomServiceImpl implements GameRoomService {
             gameHistory.setEndReason(endReason);
             gameHistory.setGameStartedAt(room.getGameStartedAt());
             gameHistory.setGameEndedAt(room.getGameEndedAt());
-            
-            // Save game data (could include board state, moves, etc.)
-            gameHistory.setGameData("{}"); // Empty JSON for now
             
             gameHistoryRepository.save(gameHistory);
             

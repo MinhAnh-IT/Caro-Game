@@ -49,12 +49,6 @@ public class RoomPlayer {
     @Column(name = "accepted_rematch", nullable = false)
     Boolean acceptedRematch = false;
     
-    @Column(name = "has_left", nullable = false)
-    Boolean hasLeft = false;
-    
-    @Column(name = "left_at")
-    LocalDateTime leftAt;
-    
     @Embeddable
     @Getter
     @Setter

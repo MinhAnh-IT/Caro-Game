@@ -82,8 +82,6 @@ public class CaroGameWebSocketController {
                     roomId, userDetails.getUserId());
             
             // Get current board state
-            int[][] board = caroGameService.getCurrentBoard(roomId);
-            
             // Note: In a full implementation, you might want to send this back to the specific user
             // For now, we'll just log that the request was processed
             log.debug("Successfully processed WebSocket board request for room {}", roomId);

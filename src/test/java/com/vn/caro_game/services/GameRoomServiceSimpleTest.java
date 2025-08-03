@@ -195,6 +195,7 @@ class GameRoomServiceSimpleTest {
             roomPlayerHost.setReadyState(PlayerReadyState.READY);
             
             when(gameRoomRepository.findById(1L)).thenReturn(Optional.of(gameRoom));
+            when(gameRoomRepository.countPlayersByRoomId(1L)).thenReturn(2); // Mock 2 players
             when(roomPlayerRepository.save(any(RoomPlayer.class))).thenReturn(roomPlayerGuest);
             
             // When

@@ -2,6 +2,7 @@ package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.configs.CustomUserDetails;
 import com.vn.caro_game.constants.FriendConstants;
+import com.vn.caro_game.controllers.base.BaseController;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.ErrorResponse;
 import com.vn.caro_game.dtos.FriendRequestDto;
@@ -32,7 +33,7 @@ import java.util.List;
 @Validated
 @Tag(name = "Friend Management", description = "APIs for managing friendships and friend requests")
 @SecurityRequirement(name = "bearerAuth")
-public class FriendController {
+public class FriendController extends BaseController {
 
     private final IFriendService friendService;
 

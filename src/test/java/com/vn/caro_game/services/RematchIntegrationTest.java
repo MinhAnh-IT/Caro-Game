@@ -137,7 +137,6 @@ class RematchIntegrationTest {
             assertEquals(PlayerReadyState.NOT_READY, player.getReadyState());
             assertEquals(GameResult.NONE, player.getGameResult());
             assertFalse(player.getAcceptedRematch());
-            assertFalse(player.getHasLeft());
         }
 
         // Verify users are now in active room

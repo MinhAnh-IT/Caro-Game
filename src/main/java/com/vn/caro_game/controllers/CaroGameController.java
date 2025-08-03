@@ -1,6 +1,7 @@
 package com.vn.caro_game.controllers;
 
 import com.vn.caro_game.configs.CustomUserDetails;
+import com.vn.caro_game.controllers.base.BaseController;
 import com.vn.caro_game.dtos.request.GameMoveRequest;
 import com.vn.caro_game.dtos.response.ApiResponse;
 import com.vn.caro_game.dtos.response.GameMoveResponse;
@@ -29,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Validated
 @Tag(name = "Caro Game", description = "APIs for Caro game operations")
-public class CaroGameController {
+public class CaroGameController extends BaseController {
 
     private final CaroGameService caroGameService;
 

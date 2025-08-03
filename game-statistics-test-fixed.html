@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Statistics API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .auth-section {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type="text"], input[type="password"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .endpoint-section {
+            margin-bottom: 30px;
+        }
+        
+        .endpoint-title {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 4px 4px 0 0;
+            margin: 0;
+            font-size: 16px;
+        }
+        
+        .endpoint-body {
+            border: 1px solid #007bff;
+            border-top: none;
+            padding: 15px;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .inline-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+        
+        .inline-inputs > div {
+            flex: 1;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-connected {
+            background-color: #28a745;
+        }
+        
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Game Board Styles */
+        .game-board-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .game-board {
+            display: inline-grid;
+            grid-template-columns: repeat(15, 30px);
+            grid-template-rows: repeat(15, 30px);
+            gap: 1px;
+            background-color: #333;
+            border: 2px solid #333;
+            margin: 20px auto;
+        }
+
+        .board-cell {
+            width: 30px;
+            height: 30px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .board-cell:hover {
+            background-color: #e9ecef;
+        }
+
+        .board-cell.player-x {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .board-cell.player-o {
+            background-color: #4ecdc4;
+            color: white;
+        }
+
+        .board-cell.last-move {
+            border: 3px solid #ffd93d;
+            box-sizing: border-box;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .player-symbol {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .symbol-x {
+            background-color: #ff6b6b;
+        }
+
+        .symbol-o {
+            background-color: #4ecdc4;
+        }
+
+        .game-result {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .result-win {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .result-draw {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .move-controls {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .move-controls button {
+            margin: 0 5px;
+            padding: 8px 16px;
+        }
+
+        .current-move {
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+
+        /* Game History Table Styles */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .history-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .history-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .history-table tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        .game-id-link {
+            color: #007bff;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .game-id-link:hover {
+            color: #0056b3;
+            background-color: #fff3cd;
+        }
+
+        .result-win-cell {
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .result-lose-cell {
+            color: #721c24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Game Statistics API Test</h1>
+    
+    <!-- Authentication Section -->
+    <div class="container">
+        <div class="auth-section">
+            <h2>🔐 Authentication</h2>
+            <div class="input-group">
+                <label>API Base URL:</label>
+                <input type="text" id="apiBaseUrl" value="http://localhost:8080/api" placeholder="API Base URL">
+            </div>
+            <div class="inline-inputs">
+                <div>
+                    <label>Username:</label>
+                    <input type="text" id="username" placeholder="Enter username">
+                </div>
+                <div>
+                    <label>Password:</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+                <div>
+                    <button onclick="login()">Login</button>
+                </div>
+            </div>
+            <div>
+                <span class="status-indicator" id="authStatus"></span>
+                <span id="authText">Not authenticated</span>
+                <button onclick="logout()" style="margin-left: 10px;">Logout</button>
+                <button onclick="showTokenInfo()" style="margin-left: 5px;">Token Info</button>
+                <button onclick="testAuth()" style="margin-left: 5px;">Test Auth</button>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                💡 <strong>Tip:</strong> Your access token is automatically saved in browser localStorage and will persist between sessions until logout or expiry.
+            </div>
+        </div>
+    </div>
+
+    <!-- API Test Sections -->
+    <div class="container">
+        
+        <!-- My Game Statistics -->
+        <div class="endpoint-section">
+            <h3 class="endpoint-title">📊 GET /api/statistics/my-stats - My Game Statistics</h3>
+            <div class="endpoint-body">
+                <button onclick="getMyStats()">Get My Statistics</button>
+                <div id="myStatsResponse" class="response" style="display:none;"></div>
+                <div id="myStatsCards" class="stats-grid" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- User Statistics by ID -->
+        <div class="endpoint-section">
+            <h3 class="endpoint-title">👤 GET /api/statistics/user/{userId} - User Statistics</h3>
+            <div class="endpoint-body">
+                <div class="inline-inputs">
+                    <div>
+                        <label>User ID:</label>
+                        <input type="number" id="userIdInput" placeholder="Enter user ID" value="1">
+                    </div>
+                    <div>
+                        <button onclick="getUserStats()">Get User Statistics</button>
+                    </div>
+                </div>
+                <div id="userStatsResponse" class="response" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Game Replay -->
+        <div class="endpoint-section">
+            <h3 class="endpoint-title">🎬 GET /api/statistics/replay/{gameId} - Game Replay</h3>
+            <div class="endpoint-body">
+                <div class="inline-inputs">
+                    <div>
+                        <label>Game ID (from My History):</label>
+                        <input type="number" id="gameHistoryIdInput" placeholder="Enter game ID from history" value="12">
+                    </div>
+                    <div>
+                        <button onclick="getGameReplay()">Get Game Replay</button>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 4px; font-size: 12px;">
+                    💡 <strong>Tip:</strong> Use the <strong>gameId</strong> from "My Game History" section above. Click on any Game ID in the history table to automatically load the replay.
+                </div>
+                <div id="gameReplayResponse" class="response" style="display:none;"></div>
+                <div id="gameBoard" class="game-board-container" style="display:none;">
+                    <div class="game-info">
+                        <div class="player-info">
+                            <div class="player-name" id="playerXName">Player X</div>
+                            <div class="player-symbol symbol-x">X</div>
+                        </div>
+                        <div class="game-result" id="gameResult">Game Result</div>
+                        <div class="player-info">
+                            <div class="player-name" id="playerOName">Player O</div>
+                            <div class="player-symbol symbol-o">O</div>
+                        </div>
+                    </div>
+                    <div class="current-move" id="currentMove">Click "First Move" to start replay</div>
+                    <div class="move-controls">
+                        <button onclick="firstMove()">⏮️ First</button>
+                        <button onclick="previousMove()">⏪ Previous</button>
+                        <button onclick="playPause()" id="playPauseBtn">▶️ Play</button>
+                        <button onclick="nextMove()">⏩ Next</button>
+                        <button onclick="lastMove()">⏭️ Last</button>
+                    </div>
+                    <div class="game-board" id="caroBoardGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Game History -->
+        <div class="endpoint-section">
+            <h3 class="endpoint-title">📚 GET /api/statistics/my-history - My Game History</h3>
+            <div class="endpoint-body">
+                <div class="inline-inputs">
+                    <div>
+                        <label>Page:</label>
+                        <input type="number" id="historyPageInput" placeholder="Page" value="0" min="0">
+                    </div>
+                    <div>
+                        <label>Size:</label>
+                        <input type="number" id="historySizeInput" placeholder="Size" value="10" min="1" max="100">
+                    </div>
+                    <div>
+                        <label>Sort:</label>
+                        <select id="historySortInput">
+                            <option value="desc">Newest First</option>
+                            <option value="asc">Oldest First</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button onclick="getMyHistory()">Get My History</button>
+                    </div>
+                </div>
+                <div id="myHistoryResponse" class="response" style="display:none;"></div>
+                <div id="gameHistoryTable" style="display:none; margin-top: 15px;">
+                    <h4>📋 Click on any Game ID to replay:</h4>
+                    <div id="historyTableContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="endpoint-section">
+            <h3 class="endpoint-title">🏆 GET /api/statistics/leaderboard - Top Players</h3>
+            <div class="endpoint-body">
+                <div class="inline-inputs">
+                    <div>
+                        <label>Limit:</label>
+                        <input type="number" id="leaderboardLimitInput" placeholder="Limit" value="10" min="1" max="100">
+                    </div>
+                    <div>
+                        <label>Page:</label>
+                        <input type="number" id="leaderboardPageInput" placeholder="Page" value="0" min="0">
+                    </div>
+                    <div>
+                        <label>Size:</label>
+                        <input type="number" id="leaderboardSizeInput" placeholder="Size" value="10" min="1" max="100">
+                    </div>
+                    <div>
+                        <button onclick="getLeaderboard()">Get Leaderboard</button>
+                    </div>
+                </div>
+                <div id="leaderboardResponse" class="response" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- My Ranking -->
+        <div class="endpoint-section">
+            <h3 class="endpoint-title">🎯 GET /api/statistics/my-ranking - My Ranking</h3>
+            <div class="endpoint-body">
+                <button onclick="getMyRanking()">Get My Ranking</button>
+                <div id="myRankingResponse" class="response" style="display:none;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Global variables
+        let authToken = localStorage.getItem('authToken') || '';
+        let userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        let apiBaseUrl = 'http://localhost:8080/api';
+
+        // Update auth status on page load
+        updateAuthStatus();
+        checkTokenOnStartup();
+
+        function updateAuthStatus() {
+            const statusElement = document.getElementById('authStatus');
+            const textElement = document.getElementById('authText');
+            
+            if (authToken && userInfo.username) {
+                statusElement.className = 'status-indicator status-connected';
+                textElement.textContent = `Authenticated as: ${userInfo.username}`;
+            } else if (authToken) {
+                statusElement.className = 'status-indicator status-connected';
+                textElement.textContent = 'Authenticated (token found)';
+            } else {
+                statusElement.className = 'status-indicator status-disconnected';
+                textElement.textContent = 'Not authenticated';
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            apiBaseUrl = document.getElementById('apiBaseUrl').value;
+
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+
+            try {
+                console.log('Attempting login with:', { username, apiBaseUrl });
+                
+                const response = await fetch(`${apiBaseUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                console.log('Login response:', { status: response.status, data });
+                
+                if (response.ok && data.success) {
+                    // Debug: Log token structure
+                    console.log('Token received:', data.data);
+                    
+                    // Lưu access token - check different possible token fields
+                    authToken = data.data.token || data.data.accessToken || data.data.jwt;
+                    if (!authToken) {
+                        console.error('No token found in response data:', data.data);
+                        alert('Login response missing token. Check console for details.');
+                        return;
+                    }
+                    
+                    localStorage.setItem('authToken', authToken);
+                    console.log('Token saved to localStorage:', authToken.substring(0, 20) + '...');
+                    
+                    // Lưu thông tin user
+                    userInfo = {
+                        username: username,
+                        userId: data.data.userId || data.data.id || null,
+                        loginTime: new Date().toISOString()
+                    };
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                    
+                    updateAuthStatus();
+                    alert(`Login successful! Welcome ${username}!\nToken saved: ${authToken.substring(0, 20)}...`);
+                    
+                    // Clear password field for security
+                    document.getElementById('password').value = '';
+                } else {
+                    console.error('Login failed:', data);
+                    alert(`Login failed: ${data.message || 'Unknown error'}\nStatus: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert(`Login error: ${error.message}`);
+            }
+        }
+
+        function logout() {
+            authToken = '';
+            userInfo = {};
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userInfo');
+            updateAuthStatus();
+            alert('Logged out successfully');
+        }
+
+        // Kiểm tra xem token có còn hạn không (optional - JWT có thể decode để check exp)
+        function isTokenExpired() {
+            if (!authToken) return true;
+            
+            try {
+                // Decode JWT token để kiểm tra expiration (chỉ là ví dụ cơ bản)
+                const tokenParts = authToken.split('.');
+                if (tokenParts.length !== 3) return true;
+                
+                const payload = JSON.parse(atob(tokenParts[1]));
+                const currentTime = Math.floor(Date.now() / 1000);
+                
+                return payload.exp && payload.exp < currentTime;
+            } catch (error) {
+                console.log('Error checking token expiration:', error);
+                return false; // Nếu không decode được thì coi như token vẫn hợp lệ
+            }
+        }
+
+        // Tự động kiểm tra token khi load page
+        function checkTokenOnStartup() {
+            if (authToken && isTokenExpired()) {
+                alert('Your session has expired. Please login again.');
+                logout();
+            }
+        }
+
+        async function testAuth() {
+            console.log('Testing authentication...');
+            if (!authToken) {
+                alert('No token found. Please login first.');
+                return;
+            }
+            
+            // Test với một endpoint đơn giản trước (thử với profile hoặc user info)
+            const response = await makeApiCall('/users/profile'); // Hoặc endpoint nào verify token
+            
+            if (response) {
+                if (response.ok) {
+                    alert('✅ Authentication test successful!\nToken is valid and working.');
+                    console.log('Auth test successful:', response.data);
+                } else {
+                    alert(`❌ Authentication test failed!\nStatus: ${response.status}\nError: ${response.error || JSON.stringify(response.data)}`);
+                    console.error('Auth test failed:', response);
+                }
+            }
+        }
+
+        function showTokenInfo() {
+            if (!authToken) {
+                alert('No token found. Please login first.');
+                return;
+            }
+            
+            console.log('Current token:', authToken);
+            console.log('User info:', userInfo);
+            
+            try {
+                const tokenParts = authToken.split('.');
+                if (tokenParts.length !== 3) {
+                    alert(`Invalid token format - Expected 3 parts, got ${tokenParts.length}\n\nToken: ${authToken}`);
+                    return;
+                }
+                
+                const header = JSON.parse(atob(tokenParts[0]));
+                const payload = JSON.parse(atob(tokenParts[1]));
+                const isExpired = isTokenExpired();
+                const expDate = payload.exp ? new Date(payload.exp * 1000).toLocaleString() : 'N/A';
+                const iatDate = payload.iat ? new Date(payload.iat * 1000).toLocaleString() : 'N/A';
+                
+                const info = `📋 TOKEN INFORMATION:
+
+🔐 Header:
+- Type: ${header.typ || 'N/A'}
+- Algorithm: ${header.alg || 'N/A'}
+
+👤 Payload:
+- User: ${userInfo.username || 'N/A'}
+- Subject: ${payload.sub || 'N/A'}
+- User ID: ${userInfo.userId || payload.userId || 'N/A'}
+- Issued At: ${iatDate}
+- Expires: ${expDate}
+- Issuer: ${payload.iss || 'N/A'}
+- Audience: ${payload.aud || 'N/A'}
+
+⏱️ Status:
+- Current Status: ${isExpired ? '❌ EXPIRED' : '✅ VALID'}
+- Login Time: ${userInfo.loginTime ? new Date(userInfo.loginTime).toLocaleString() : 'N/A'}
+
+🔗 Token (first 30 + last 30 chars):
+${authToken.substring(0, 30)}...${authToken.substring(authToken.length - 30)}
+
+📊 Token Length: ${authToken.length} characters`;
+                
+                alert(info);
+                console.log('Token details:', { header, payload, userInfo });
+            } catch (error) {
+                console.error('Error parsing token:', error);
+                alert(`Error reading token: ${error.message}\n\nToken: ${authToken.substring(0, 50)}...`);
+            }
+        }
+
+        async function makeApiCall(endpoint, method = 'GET', body = null) {
+            if (!authToken) {
+                alert('Please login first - no token found');
+                return null;
+            }
+
+            console.log(`Making API call: ${method} ${apiBaseUrl}${endpoint}`);
+            console.log('Using token:', authToken.substring(0, 20) + '...');
+
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                console.log('Request headers:', options.headers);
+
+                const response = await fetch(`${apiBaseUrl}${endpoint}`, options);
+                const data = await response.json();
+                
+                console.log(`API Response [${response.status}]:`, data);
+                
+                // Nếu token hết hạn (401), tự động logout
+                if (response.status === 401) {
+                    console.error('401 Unauthorized - Token invalid or expired');
+                    alert('Session expired or invalid token. Please login again.');
+                    logout();
+                    return {
+                        ok: false,
+                        status: response.status,
+                        data: data,
+                        error: 'Session expired'
+                    };
+                }
+                
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: data
+                };
+            } catch (error) {
+                console.error('API call error:', error);
+                return {
+                    ok: false,
+                    error: error.message
+                };
+            }
+        }
+
+        function displayResponse(elementId, response) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (response.ok) {
+                element.className = 'response success';
+                element.textContent = JSON.stringify(response.data, null, 2);
+            } else {
+                element.className = 'response error';
+                element.textContent = response.error || JSON.stringify(response.data, null, 2);
+            }
+        }
+
+        function displayStatsCards(data) {
+            const cardsContainer = document.getElementById('myStatsCards');
+            if (!data || !data.success) return;
+            
+            const stats = data.data;
+            cardsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalGamesPlayed || 0}</div>
+                    <div class="stat-label">Total Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalWins || 0}</div>
+                    <div class="stat-label">Wins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalLosses || 0}</div>
+                    <div class="stat-label">Losses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalDraws || 0}</div>
+                    <div class="stat-label">Draws</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.winRate || 0}%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.currentWinStreak || 0}</div>
+                    <div class="stat-label">Current Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.bestWinStreak || 0}</div>
+                    <div class="stat-label">Best Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.averageGameDurationMinutes || 0}m</div>
+                    <div class="stat-label">Avg Duration</div>
+                </div>
+            `;
+            cardsContainer.style.display = 'grid';
+        }
+
+        async function getMyStats() {
+            const response = await makeApiCall('/statistics/my-stats');
+            displayResponse('myStatsResponse', response);
+            if (response && response.ok) {
+                displayStatsCards(response.data);
+            }
+        }
+
+        async function getUserStats() {
+            const userId = document.getElementById('userIdInput').value;
+            if (!userId) {
+                alert('Please enter user ID');
+                return;
+            }
+            
+            const response = await makeApiCall(`/statistics/user/${userId}`);
+            displayResponse('userStatsResponse', response);
+        }
+
+        async function getGameReplay() {
+            const gameHistoryId = document.getElementById('gameHistoryIdInput').value;
+            if (!gameHistoryId) {
+                alert('Please enter game history ID');
+                return;
+            }
+            
+            const response = await makeApiCall(`/statistics/replay/${gameHistoryId}`);
+            displayResponse('gameReplayResponse', response);
+            
+            // Also display as game board if successful
+            if (response && response.ok) {
+                displayGameReplay(response.data);
+            }
+        }
+
+        async function getMyHistory() {
+            const page = document.getElementById('historyPageInput').value || 0;
+            const size = document.getElementById('historySizeInput').value || 10;
+            const sort = document.getElementById('historySortInput').value || 'desc';
+            
+            const response = await makeApiCall(`/statistics/my-history?page=${page}&size=${size}&sortDirection=${sort}`);
+            displayResponse('myHistoryResponse', response);
+            
+            // Also display as a clickable table if successful
+            if (response && response.ok) {
+                displayGameHistoryTable(response.data);
+            }
+        }
+
+        async function getLeaderboard() {
+            const limit = document.getElementById('leaderboardLimitInput').value || 10;
+            const page = document.getElementById('leaderboardPageInput').value || 0;
+            const size = document.getElementById('leaderboardSizeInput').value || 10;
+            
+            const response = await makeApiCall(`/statistics/leaderboard?limit=${limit}&page=${page}&size=${size}`);
+            displayResponse('leaderboardResponse', response);
+        }
+
+        async function getMyRanking() {
+            const response = await makeApiCall('/statistics/my-ranking');
+            displayResponse('myRankingResponse', response);
+        }
+
+        // Auto-fill API base URL if changed
+        document.getElementById('apiBaseUrl').addEventListener('change', function() {
+            apiBaseUrl = this.value;
+        });
+
+        // Game Board Variables
+        let gameReplayData = null;
+        let currentMoveIndex = -1;
+        let isPlaying = false;
+        let playInterval = null;
+        const BOARD_SIZE = 15;
+
+        // Initialize empty game board
+        function initializeGameBoard() {
+            const boardGrid = document.getElementById('caroBoardGrid');
+            boardGrid.innerHTML = '';
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'board-cell';
+                    cell.setAttribute('data-row', row);
+                    cell.setAttribute('data-col', col);
+                    cell.setAttribute('id', `cell-${row}-${col}`);
+                    boardGrid.appendChild(cell);
+                }
+            }
+        }
+
+        // Display game replay with board
+        function displayGameReplay(replayData) {
+            if (!replayData || !replayData.success) return;
+            
+            gameReplayData = replayData.data;
+            currentMoveIndex = -1;
+            
+            // DEBUG: Log the actual data structure
+            console.log('🎮 Game Replay Data:', gameReplayData);
+            console.log('📋 Moves Data:', gameReplayData.moves);
+            if (gameReplayData.moves && gameReplayData.moves.length > 0) {
+                console.log('🔍 First Move Sample:', gameReplayData.moves[0]);
+            }
+            
+            // Show game board container
+            document.getElementById('gameBoard').style.display = 'block';
+            
+            // Initialize board
+            initializeGameBoard();
+            
+            // Set player names
+            document.getElementById('playerXName').textContent = gameReplayData.playerX.playerName || 'Player X';
+            document.getElementById('playerOName').textContent = gameReplayData.playerO.playerName || 'Player O';
+            
+            // Set game result
+            const resultElement = document.getElementById('gameResult');
+            let resultText = '';
+            let resultClass = '';
+            
+            if (gameReplayData.gameResult === 'X_WIN') {
+                resultText = `🏆 ${gameReplayData.playerX.playerName || 'Player X'} Wins!`;
+                resultClass = 'result-win';
+            } else if (gameReplayData.gameResult === 'O_WIN') {
+                resultText = `🏆 ${gameReplayData.playerO.playerName || 'Player O'} Wins!`;
+                resultClass = 'result-win';
+            } else if (gameReplayData.gameResult === 'DRAW') {
+                resultText = '🤝 Draw Game';
+                resultClass = 'result-draw';
+            } else {
+                resultText = '⏸️ Game Ongoing';
+                resultClass = 'result-draw';
+            }
+            
+            resultElement.textContent = resultText;
+            resultElement.className = `game-result ${resultClass}`;
+            
+            // Update current move display
+            updateCurrentMoveDisplay();
+            
+            console.log('Game replay initialized:', gameReplayData);
+        }
+
+        // Update current move display
+        function updateCurrentMoveDisplay() {
+            const moveDisplay = document.getElementById('currentMove');
+            if (currentMoveIndex < 0) {
+                moveDisplay.textContent = `Game Start - Total Moves: ${gameReplayData.moves.length}`;
+            } else if (currentMoveIndex >= gameReplayData.moves.length) {
+                moveDisplay.textContent = `Game End - Move ${gameReplayData.moves.length}/${gameReplayData.moves.length}`;
+            } else {
+                const move = gameReplayData.moves[currentMoveIndex];
+                const playerName = move.playerSymbol === 'X' ? 
+                    gameReplayData.playerX.playerName : 
+                    gameReplayData.playerO.playerName;
+                
+                // DEBUG: Log current move details
+                console.log('🎯 Current Move Details:', {
+                    moveIndex: currentMoveIndex,
+                    move: move,
+                    allFields: Object.keys(move),
+                    xPosition: move.xPosition,
+                    yPosition: move.yPosition,
+                    xposition: move.xposition,
+                    yposition: move.yposition,
+                    x: move.x,
+                    y: move.y,
+                    row: move.row,
+                    col: move.col
+                });
+                
+                // Use the correct field names from API response
+                const xPos = move.xposition || move.xPosition;
+                const yPos = move.yposition || move.yPosition;
+                
+                moveDisplay.textContent = `Move ${currentMoveIndex + 1}/${gameReplayData.moves.length}: ${playerName} (${move.playerSymbol}) at (${xPos}, ${yPos})`;
+            }
+        }
+
+        // Apply moves to board up to current index
+        function updateBoardDisplay() {
+            // Clear all cells first
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cell = document.getElementById(`cell-${row}-${col}`);
+                    cell.textContent = '';
+                    cell.className = 'board-cell';
+                }
+            }
+            
+            // Apply moves up to current index
+            for (let i = 0; i <= currentMoveIndex; i++) {
+                if (i >= 0 && i < gameReplayData.moves.length) {
+                    const move = gameReplayData.moves[i];
+                    
+                    // Use the correct field names from API response
+                    const xPos = move.xposition || move.xPosition;
+                    const yPos = move.yposition || move.yPosition;
+                    
+                    // DEBUG: Log move details
+                    console.log(`🎯 Applying Move ${i}:`, {
+                        moveId: move.moveId,
+                        playerSymbol: move.playerSymbol,
+                        xposition: move.xposition,
+                        yposition: move.yposition,
+                        xPosition: move.xPosition,
+                        yPosition: move.yPosition,
+                        actualXPos: xPos,
+                        actualYPos: yPos,
+                        expectedCellId: `cell-${xPos}-${yPos}`
+                    });
+                    
+                    const cell = document.getElementById(`cell-${xPos}-${yPos}`);
+                    console.log(`📍 Cell found:`, cell ? 'YES' : 'NO', cell);
+                    
+                    if (cell) {
+                        cell.textContent = move.playerSymbol;
+                        cell.className = `board-cell player-${move.playerSymbol.toLowerCase()}`;
+                        
+                        // Highlight last move
+                        if (i === currentMoveIndex) {
+                            cell.classList.add('last-move');
+                        }
+                        
+                        console.log(`✅ Applied move to cell:`, cell.id, cell.textContent);
+                    } else {
+                        console.error(`❌ Cell not found for move:`, move, `Expected cell: cell-${xPos}-${yPos}`);
+                    }
+                }
+            }
+            
+            updateCurrentMoveDisplay();
+        }
+
+        // Move control functions
+        function firstMove() {
+            if (!gameReplayData) return;
+            currentMoveIndex = -1;
+            updateBoardDisplay();
+        }
+
+        function previousMove() {
+            if (!gameReplayData) return;
+            if (currentMoveIndex > -1) {
+                currentMoveIndex--;
+                updateBoardDisplay();
+            }
+        }
+
+        function nextMove() {
+            if (!gameReplayData) return;
+            if (currentMoveIndex < gameReplayData.moves.length - 1) {
+                currentMoveIndex++;
+                updateBoardDisplay();
+            }
+        }
+
+        function lastMove() {
+            if (!gameReplayData) return;
+            currentMoveIndex = gameReplayData.moves.length - 1;
+            updateBoardDisplay();
+        }
+
+        function playPause() {
+            if (!gameReplayData) return;
+            
+            const btn = document.getElementById('playPauseBtn');
+            
+            if (isPlaying) {
+                // Pause
+                isPlaying = false;
+                clearInterval(playInterval);
+                btn.textContent = '▶️ Play';
+            } else {
+                // Play
+                isPlaying = true;
+                btn.textContent = '⏸️ Pause';
+                
+                playInterval = setInterval(() => {
+                    if (currentMoveIndex < gameReplayData.moves.length - 1) {
+                        nextMove();
+                    } else {
+                        // End of game
+                        isPlaying = false;
+                        clearInterval(playInterval);
+                        btn.textContent = '▶️ Play';
+                    }
+                }, 1000); // 1 second per move
+            }
+        }
+
+        function displayGameHistoryTable(historyData) {
+            const tableContainer = document.getElementById('gameHistoryTable');
+            const tableContent = document.getElementById('historyTableContent');
+            
+            if (!historyData || !historyData.success || !historyData.data.content) {
+                tableContainer.style.display = 'none';
+                return;
+            }
+            
+            const games = historyData.data.content;
+            
+            let tableHtml = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Game ID</th>
+                            <th>Room Name</th>
+                            <th>Result</th>
+                            <th>End Reason</th>
+                            <th>Start Time</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            games.forEach(game => {
+                const resultText = game.isUserWinner ? 'WIN' : 'LOSE';
+                const resultClass = game.isUserWinner ? 'result-win-cell' : 'result-lose-cell';
+                const startTime = new Date(game.gameStartTime).toLocaleString();
+                
+                tableHtml += `
+                    <tr>
+                        <td>
+                            <span class="game-id-link" onclick="loadGameReplay(${game.gameId})" title="Click to load replay">
+                                ${game.gameId}
+                            </span>
+                        </td>
+                        <td>${game.roomName || 'N/A'}</td>
+                        <td class="${resultClass}">${resultText}</td>
+                        <td>${game.endReason || 'N/A'}</td>
+                        <td>${startTime}</td>
+                        <td>${game.gameDurationMinutes || 0} min</td>
+                        <td>
+                            <button onclick="loadGameReplay(${game.gameId})" style="padding: 4px 8px; font-size: 12px;">
+                                🎬 Replay
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                    </tbody>
+                </table>
+                <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                    📊 Total: ${historyData.data.totalElements} games | 
+                    Page: ${historyData.data.number + 1}/${historyData.data.totalPages}
+                </div>
+            `;
+            
+            tableContent.innerHTML = tableHtml;
+            tableContainer.style.display = 'block';
+        }
+
+        function loadGameReplay(gameId) {
+            // Set the game ID in the replay input
+            document.getElementById('gameHistoryIdInput').value = gameId;
+            
+            // Scroll to the Game Replay section
+            const replaySection = document.querySelector('[onclick="getGameReplay()"]').closest('.endpoint-section');
+            replaySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Highlight the input temporarily
+            const input = document.getElementById('gameHistoryIdInput');
+            input.style.backgroundColor = '#fff3cd';
+            setTimeout(() => {
+                input.style.backgroundColor = '';
+            }, 1000);
+            
+            // Show confirmation
+            const confirmed = confirm(`Load replay for Game ID: ${gameId}?\n\nThis will automatically fill the Game History ID and you can click "Get Game Replay" to view it.`);
+            
+            if (confirmed) {
+                // Automatically trigger the replay
+                getGameReplay();
+            }
+        }
+    </script>
+</body>
+</html>

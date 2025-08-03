@@ -810,6 +810,9 @@
                     if (isPrivate) {
                         addMessage(`🔑 Private room code: ${data.data.joinCode}`, 'info');
                     }
+                    
+                    // Update ready button visibility based on new room data
+                    updateReadyButtonVisibility();
                 } else {
                     const errorData = await response.json();
                     addMessage(`❌ Failed to create room: ${errorData.message}`, 'error');
@@ -837,6 +840,9 @@
                     subscribeToRoom(currentRoomId);
                     
                     addMessage(`⚡ Quick play room ready: ${currentRoomData.name}`, 'success');
+                    
+                    // Update ready button visibility based on new room data
+                    updateReadyButtonVisibility();
                 } else {
                     const errorData = await response.json();
                     addMessage(`❌ Quick play failed: ${errorData.message}`, 'error');
@@ -900,6 +906,9 @@
                     subscribeToRoom(currentRoomId);
                     
                     addMessage(`🚪 Joined room: ${data.data.name}`, 'success');
+                    
+                    // Update ready button visibility based on new room data
+                    updateReadyButtonVisibility();
                 } else {
                     const errorData = await response.json();
                     addMessage(`❌ Failed to join room: ${errorData.message}`, 'error');
@@ -971,12 +980,65 @@
                     subscribeToRoom(currentRoomId);
                     
                     addMessage(`🚪 Joined public room: ${data.data.name}`, 'success');
+                    
+                    // Update ready button visibility based on new room data
+                    updateReadyButtonVisibility();
                 } else {
                     const errorData = await response.json();
                     addMessage(`❌ Failed to join room: ${errorData.message}`, 'error');
                 }
             } catch (error) {
                 addMessage(`❌ Join room error: ${error.message}`, 'error');
+            }
+        }
+
+        // Function to refresh room data from server
+        async function refreshRoomData() {
+            if (!currentRoomId || !authToken) return;
+            
+            try {
+                const response = await fetch(`http://localhost:8080/api/rooms/${currentRoomId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentRoomData = data.data;
+                    updateRoomInfo();
+                    updateReadyButtonVisibility();
+                    addMessage(`🔄 Room data refreshed. canMarkReady: ${currentRoomData.canMarkReady}`, 'info');
+                } else {
+                    addMessage('⚠️ Could not refresh room data', 'info');
+                }
+            } catch (error) {
+                addMessage(`⚠️ Error refreshing room data: ${error.message}`, 'info');
+            }
+        }
+
+        // Function to update ready button visibility based on canMarkReady
+        function updateReadyButtonVisibility() {
+            const readyBtn = document.getElementById('readyBtn');
+            
+            if (currentRoomData && currentRoomData.hasOwnProperty('canMarkReady')) {
+                if (currentRoomData.canMarkReady && !gameState.yourReady) {
+                    readyBtn.disabled = false;
+                    readyBtn.style.display = 'inline-block';
+                    addMessage(`✅ Ready button enabled (${currentRoomData.currentPlayerCount}/${currentRoomData.maxPlayers} players)`, 'success');
+                } else if (!currentRoomData.canMarkReady) {
+                    readyBtn.disabled = true;
+                    readyBtn.style.display = 'inline-block'; // Vẫn hiển thị nút nhưng disabled
+                    addMessage(`❌ Ready button disabled - insufficient players (${currentRoomData.currentPlayerCount}/${currentRoomData.maxPlayers})`, 'info');
+                } else if (gameState.yourReady) {
+                    readyBtn.disabled = true;
+                    readyBtn.style.display = 'inline-block';
+                    addMessage('✅ You are already ready', 'info');
+                }
+            } else {
+                // Fallback to old logic if canMarkReady is not available
+                readyBtn.disabled = gameState.yourReady;
+                readyBtn.style.display = 'inline-block';
             }
         }
 
@@ -1010,8 +1072,10 @@
                     // Reset game state for new game
                     resetGame();
                     
-                    // Enable ready button for new game
-                    document.getElementById('readyBtn').disabled = false;
+                    // Update ready button visibility for new room
+                    updateReadyButtonVisibility();
+                    
+                    // Enable rematch buttons state
                     document.getElementById('requestRematchBtn').disabled = true;
                     document.getElementById('acceptRematchBtn').disabled = true;
                     
@@ -1069,6 +1133,9 @@
             addMessage(`📡 Subscribed to room ${roomId} events`, 'success');
             enableGameButtons();
             
+            // Update ready button visibility based on current room data
+            updateReadyButtonVisibility();
+            
             // Check if room is already in PLAYING state and initialize game
             if (currentRoomData && currentRoomData.status === 'PLAYING') {
                 addMessage('🔄 Room already in PLAYING state, initializing game...', 'info');
@@ -1090,14 +1157,25 @@
         function handleRoomUpdate(updateData) {
             console.log('Room update received:', updateData);
             
+            // Update room data if provided in the update
+            if (updateData.roomData) {
+                currentRoomData = updateData.roomData;
+                updateRoomInfo();
+                updateReadyButtonVisibility();
+            }
+            
             switch (updateData.updateType) {
                 case 'PLAYER_JOINED':
                     gameState.playerCount = Math.min(2, gameState.playerCount + 1);
                     showNotification('Player joined the room');
+                    // Refresh room data to get updated canMarkReady status
+                    refreshRoomData();
                     break;
                 case 'PLAYER_LEFT':
                     gameState.playerCount = Math.max(0, gameState.playerCount - 1);
                     showNotification('Player left the room');
+                    // Refresh room data to get updated canMarkReady status
+                    refreshRoomData();
                     break;
                 case 'PLAYER_READY':
                     console.log('Player ready update:', updateData);
@@ -1108,6 +1186,8 @@
                     }
                     showNotification(`Player marked as ready!`);
                     updatePlayerStatus();
+                    // Refresh room data to get updated canMarkReady status
+                    refreshRoomData();
                     break;
                 case 'GAME_STARTED':
                     gameState.gameActive = true;
@@ -1512,7 +1592,12 @@
             document.getElementById('currentRoomName').textContent = currentRoomData?.name || 'None';
             document.getElementById('roomStatus').textContent = currentRoomData?.status || 'None';
             document.getElementById('playerCount').textContent = currentRoomData ? 
-                `${currentRoomData.players?.length || 0}/2` : '0/2';
+                `${currentRoomData.players?.length || currentRoomData.currentPlayerCount || 0}/${currentRoomData.maxPlayers || 2}` : '0/2';
+            
+            // Display canMarkReady status for debugging
+            if (currentRoomData && currentRoomData.hasOwnProperty('canMarkReady')) {
+                addMessage(`🔍 Room Info - canMarkReady: ${currentRoomData.canMarkReady}, gameState: ${currentRoomData.gameState}, players: ${currentRoomData.currentPlayerCount}/${currentRoomData.maxPlayers}`, 'info');
+            }
         }
 
         function updatePlayerStatus() {
@@ -1544,10 +1629,8 @@
                     gameInfo.textContent = 'Game starting...';
                 } else {
                     gameInfo.textContent = 'Waiting for players to be ready...';
-                    // Re-enable ready button if not ready yet
-                    if (!gameState.yourReady) {
-                        document.getElementById('readyBtn').disabled = false;
-                    }
+                    // Update ready button visibility when game info changes
+                    updateReadyButtonVisibility();
                 }
             } else {
                 gameInfo.textContent = isMyTurn ? 'Your turn' : "Opponent's turn";
@@ -1587,10 +1670,11 @@
         }
 
         function enableGameButtons() {
-            document.getElementById('readyBtn').disabled = false;
             document.getElementById('statusBtn').disabled = false;
             document.getElementById('debugBtn').disabled = false;
             document.getElementById('leaveBtn').disabled = false;
+            // Don't enable ready button here - let updateReadyButtonVisibility handle it
+            updateReadyButtonVisibility();
         }
 
         function disableGameButtons() {

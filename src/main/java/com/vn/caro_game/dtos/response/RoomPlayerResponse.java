@@ -43,12 +43,6 @@ public class RoomPlayerResponse {
     @Schema(description = "Whether player accepted rematch", example = "false")
     Boolean acceptedRematch;
 
-    @Schema(description = "Whether player has left the room", example = "false")
-    Boolean hasLeft;
-
-    @Schema(description = "Time when player left the room")
-    LocalDateTime leftAt;
-
     // Legacy constructor for backward compatibility
     public RoomPlayerResponse(UserSummaryResponse player, Boolean isHost, LocalDateTime joinTime, Boolean isOnline) {
         this.player = player;
@@ -60,13 +54,11 @@ public class RoomPlayerResponse {
         this.readyState = PlayerReadyState.NOT_READY;
         this.gameResult = GameResult.NONE;
         this.acceptedRematch = false;
-        this.hasLeft = false;
     }
 
     // Full constructor for enhanced features
     public RoomPlayerResponse(UserSummaryResponse player, Boolean isHost, LocalDateTime joinTime, Boolean isOnline,
-                             PlayerReadyState readyState, GameResult gameResult, Boolean acceptedRematch,
-                             Boolean hasLeft, LocalDateTime leftAt) {
+                             PlayerReadyState readyState, GameResult gameResult, Boolean acceptedRematch) {
         this.player = player;
         this.isHost = isHost;
         this.joinTime = joinTime;
@@ -74,7 +66,5 @@ public class RoomPlayerResponse {
         this.readyState = readyState;
         this.gameResult = gameResult;
         this.acceptedRematch = acceptedRematch;
-        this.hasLeft = hasLeft;
-        this.leftAt = leftAt;
     }
 }

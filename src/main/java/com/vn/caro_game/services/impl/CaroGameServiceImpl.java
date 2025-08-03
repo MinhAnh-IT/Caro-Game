@@ -70,11 +70,24 @@ public class CaroGameServiceImpl implements CaroGameService {
         log.debug("Processing move for room {} by user {} at position ({}, {})", 
                 roomId, userId, request.getXPosition(), request.getYPosition());
 
-        // Validate room exists and is in correct state
-        GameRoom room = validateGameRoom(roomId);
+        // First try regular find to get the room
+        GameRoom room = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(StatusCode.ROOM_NOT_FOUND));
+        
+        // Game must be in progress to make moves
+        if (room.getGameState() != GameState.IN_PROGRESS) {
+            log.error("Invalid game state for moves. Room {} is in state: {}", roomId, room.getGameState());
+            throw new CustomException(StatusCode.GAME_NOT_ACTIVE);
+        }
         
         // Get current active match with pessimistic locking to prevent race conditions
         GameMatch currentMatch = getCurrentActiveMatch(room);
+        
+        // If players are not loaded (lazy loading), reload with players for turn validation
+        if (room.getRoomPlayers().isEmpty()) {
+            room = gameRoomRepository.findByIdWithPlayers(roomId)
+                    .orElseThrow(() -> new CustomException(StatusCode.ROOM_NOT_FOUND));
+        }
         
         // Validate player is in the room and it's their turn FIRST (before board operations)
         validatePlayerTurn(room, currentMatch, userId);
@@ -225,18 +238,6 @@ public class CaroGameServiceImpl implements CaroGameService {
     /**
      * Validates that the game room exists and is in the correct state for gameplay.
      */
-    private GameRoom validateGameRoom(Long roomId) {
-        GameRoom room = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new CustomException(StatusCode.ROOM_NOT_FOUND));
-        
-        // Game must be in progress to make moves
-        if (room.getGameState() != GameState.IN_PROGRESS) {
-            log.error("Invalid game state for moves. Room {} is in state: {}", roomId, room.getGameState());
-            throw new CustomException(StatusCode.GAME_NOT_ACTIVE);
-        }
-        
-        return room;
-    }
 
     /**
      * Gets the current active match for the room.
@@ -421,7 +422,6 @@ public class CaroGameServiceImpl implements CaroGameService {
             gameHistory.setEndReason(endReason);
             gameHistory.setGameStartedAt(room.getGameStartedAt());
             gameHistory.setGameEndedAt(room.getGameEndedAt());
-            gameHistory.setGameData("{}"); // Empty JSON for now
             
             gameHistoryRepository.save(gameHistory);
             log.info("Game history saved successfully for room {}", room.getId());
@@ -445,7 +445,6 @@ public class CaroGameServiceImpl implements CaroGameService {
                 gameHistory.setEndReason(GameEndReason.WIN); // Use WIN for completed games (even draws)
                 gameHistory.setGameStartedAt(room.getGameStartedAt());
                 gameHistory.setGameEndedAt(room.getGameEndedAt());
-                gameHistory.setGameData(String.format("{\"result\":\"DRAW\",\"playerCount\":%d}", players.size()));
                 
                 gameHistoryRepository.save(gameHistory);
                 log.info("Draw game history saved for room {}", room.getId());

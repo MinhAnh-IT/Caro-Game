@@ -63,6 +63,7 @@ public enum StatusCode {
     USER_ALREADY_IN_ROOM(4028, "User is already in a room"),
     NOT_FRIENDS_TO_INVITE(4029, "You can only invite friends to private rooms"),
     CHAT_MESSAGE_TOO_LONG(4030, "Chat message is too long"),
+    INSUFFICIENT_PLAYERS(4041, "Insufficient players to start the game"),
     
     // Enhanced Game Room errors for new flow
     INVALID_GAME_STATE(4032, "Invalid game state for this operation"),

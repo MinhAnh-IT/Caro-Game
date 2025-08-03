@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -156,12 +158,19 @@ public class RedisServiceImpl implements RedisService {
         List<Friend> friendships = friendRepository.findAcceptedFriendshipsByUserId(userId);
         
         List<FriendOnlineStatusResponse> friendsList = new ArrayList<>();
+        Set<Long> processedFriends = new HashSet<>(); // To avoid duplicates
 
         for (Friend friendship : friendships) {
             // Determine which user is the friend (not the requesting user)
             User friendUser = friendship.getUser().getId().equals(userId)
                 ? friendship.getFriend()
                 : friendship.getUser();
+
+            // Skip if we already processed this friend
+            if (processedFriends.contains(friendUser.getId())) {
+                continue;
+            }
+            processedFriends.add(friendUser.getId());
 
             // Check online status for this friend
             boolean isOnline = isUserOnline(friendUser.getId());

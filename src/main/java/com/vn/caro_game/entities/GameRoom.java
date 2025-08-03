@@ -87,7 +87,7 @@ public class GameRoom {
     }
     
     public boolean bothPlayersReady() {
-        return getPlayerCount() >= 2 && getReadyPlayersCount() >= 2;
+        return getPlayerCount() == 2 && getReadyPlayersCount() == 2;
     }
     
     public boolean canStartGame() {

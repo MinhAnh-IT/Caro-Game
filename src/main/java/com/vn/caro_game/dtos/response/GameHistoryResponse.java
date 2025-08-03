@@ -24,7 +24,6 @@ public class GameHistoryResponse {
     GameEndReason endReason;
     LocalDateTime gameStartedAt;
     LocalDateTime gameEndedAt;
-    String gameData;
     LocalDateTime createdAt;
     
     // Additional computed fields
